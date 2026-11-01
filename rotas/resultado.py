@@ -1,6 +1,6 @@
 """Aba 03: resultado. A tela muda conforme o tipo de contratação.
 
-  Licitação pública -> tabela mínimo/alvo/recomendado, régua de preço, especificação e justificativa
+  Licitação pública -> configuração mínima ou recomendada, preços, especificação, justificativa e comparação de propostas
   Cotação           -> estados, texto do pedido de orçamento, registro de contatos, pontos de busca
 
 As rotas POST abaixo salvam o que o usuário digitou e voltam para a mesma tela.
@@ -35,13 +35,6 @@ def pagina():
 
 
 # --------------------------------------------------------------------------- licitação
-@bp.route("/resultado/nivel", methods=["POST"])
-def nivel():
-    est = estado.obter()
-    est["nivel_spec"] = "minimo" if request.form.get("nivel") == "minimo" else "alvo"
-    return _voltar("especificacao")
-
-
 @bp.route("/resultado/precos", methods=["POST"])
 def precos():
     est = estado.obter()

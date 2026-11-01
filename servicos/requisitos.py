@@ -1,25 +1,33 @@
-"""Monta a lista de softwares (com os requisitos, já editados pelo usuário, se houver)."""
+"""Monta a lista de softwares com os requisitos."""
 import copy
-
 from dados.finalidades import FINALIDADES_POR_ID
 from dados.softwares import MANUAL, SOFTWARES
 
 
-def _base(sid):
-    return MANUAL if sid == "manual" else SOFTWARES[sid]
+def _base(sid, custom_sw=None):
+    if sid in SOFTWARES:
+        return SOFTWARES[sid]
+    if sid == "manual":
+        return MANUAL
+    # software customizado ("outra necessidade")
+    nome = (custom_sw or {}).get(sid, sid[7:].replace("_", " ") if sid.startswith("custom_") else sid)
+    sw = copy.deepcopy(MANUAL)
+    sw["id"] = sid
+    sw["nome"] = nome
+    return sw
 
 
-def requisitos_padrao(sid):
-    b = _base(sid)
+def requisitos_padrao(sid, custom_sw=None):
+    b = _base(sid, custom_sw)
     return {"fonte": b["fonte"], "min": dict(b["min"]), "rec": dict(b["rec"])}
 
 
 def softwares_do_estado(est):
-    """Softwares escolhidos na etapa 1, com os requisitos da etapa 2."""
+    custom_sw = est.get("custom_sw", {})
     lista = []
-    for sid in est["softwares"]:
-        b = _base(sid)
-        ed = est["reqs_sw"].get(sid) or requisitos_padrao(sid)
+    for sid in est.get("softwares", []):
+        b = _base(sid, custom_sw)
+        ed = est.get("reqs_sw", {}).get(sid) or requisitos_padrao(sid, custom_sw)
         lista.append({
             "id": sid,
             "nome": b["nome"],
@@ -31,9 +39,12 @@ def softwares_do_estado(est):
 
 
 def softwares_padrao_da_finalidade(finalidade_id):
-    """Softwares que já vêm marcados para a finalidade, com requisitos originais."""
+    """Softwares que já vêm marcados para a finalidade, com os requisitos originais.
+
+    Usada na aba Conferir especificação quando não há uma consulta em andamento.
+    """
     f = FINALIDADES_POR_ID[finalidade_id]
-    ids = f["padrao"] or ["manual"]
+    ids = [sid for sid in f["padrao"] if sid in SOFTWARES] or ["manual"]
     lista = []
     for sid in ids:
         b = _base(sid)

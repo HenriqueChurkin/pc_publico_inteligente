@@ -2,53 +2,176 @@
 {% block titulo %}03 Resultado · {{ cfg.NOME_SITE }}{% endblock %}
 {% block conteudo %}
 
-<p class="etapa">Etapa 03 / 03 · Licitação pública</p>
-<h1>Requisitos e referência de preço da licitação</h1>
-<p class="lead">
-  Finalidade selecionada: <b>{{ finalidade_nome }}</b> ·
-  {% for s in softwares %}{{ s.nome }}{{ ', ' if not loop.last }}{% endfor %}
-  · vida útil de {{ cond.vida_util }} anos
+<span class="etapa-badge">Passo 3 de 3 · Licitação pública</span>
+<h1>Configuração recomendada para a licitação</h1>
+<p class="lead">Finalidade: <b>{{ finalidade_nome }}</b> · vida útil de {{ cond.vida_util }} anos</p>
+
+{% macro brl_int(n) %}R$ {{ '{:,.0f}'.format(n).replace(',', '.') }}{% endmacro %}
+
+<!-- ═══════════════════════════════════════════
+     SELETOR MÍNIMO ←—barra—→ RECOMENDADO
+     ═══════════════════════════════════════════ -->
+<div class="config-selector" id="config-selector">
+
+  <!-- Card Mínimo -->
+  <div class="config-card" id="card-min" data-nivel="minimo" role="button" tabindex="0" aria-pressed="false">
+    <div class="config-card-header">
+      <div class="config-card-badge badge-min">Configuração Mínima</div>
+      <div class="config-card-preco">{{ brl_int(faixa_auto.preco_min) }}</div>
+      <div class="config-card-sub">Preço médio estimado</div>
+      <div class="config-variacao">{{ brl_int(faixa_auto.min_baixo) }} – {{ brl_int(faixa_auto.min_alto) }}</div>
+    </div>
+    <div class="config-card-body">
+      <div class="config-linha">
+        <span class="config-comp"><span class="comp-icon">🧠</span>Processador</span>
+        <span class="config-val">{{ calc.componentes | selectattr('id','equalto','cpu') | map(attribute='min_txt') | first }}</span>
+      </div>
+      <div class="config-linha">
+        <span class="config-comp"><span class="comp-icon">💾</span>Memória RAM</span>
+        <span class="config-val">{{ calc.componentes | selectattr('id','equalto','ram') | map(attribute='min_txt') | first }}</span>
+      </div>
+      <div class="config-linha">
+        <span class="config-comp"><span class="comp-icon">💿</span>Armazenamento</span>
+        <span class="config-val">{{ calc.componentes | selectattr('id','equalto','ssd') | map(attribute='min_txt') | first }}</span>
+      </div>
+      <div class="config-linha">
+        <span class="config-comp"><span class="comp-icon">🖥️</span>Placa de vídeo</span>
+        <span class="config-val">{{ calc.componentes | selectattr('id','equalto','gpu') | map(attribute='min_txt') | first }}</span>
+      </div>
+    </div>
+    <div class="config-card-footer">
+      <div class="config-hint">Clique para selecionar</div>
+      <div class="config-check">✓ Selecionado</div>
+    </div>
+  </div>
+
+  <!-- Barra central -->
+  <div class="barra-preco-wrapper" id="barra-wrapper">
+    <div class="barra-preco-container">
+      <div class="barra-preco-trilho">
+        <div class="barra-preco-fill" id="barra-fill"></div>
+        <div class="barra-preco-thumb" id="barra-thumb"></div>
+      </div>
+      <div class="barra-preco-rotulos">
+        <span>Mínimo</span>
+        <span>Recomendado</span>
+      </div>
+    </div>
+    <div class="barra-preco-destaque" id="barra-destaque" style="display:none">
+      <div class="barra-destaque-label" id="barra-label"></div>
+      <div class="barra-destaque-valor" id="barra-valor"></div>
+      <div class="barra-destaque-variacao" id="barra-variacao"></div>
+    </div>
+    <div class="barra-nenhum" id="barra-nenhum">← Clique em uma<br>configuração</div>
+  </div>
+
+  <!-- Card Recomendado -->
+  <div class="config-card config-card-rec" id="card-rec" data-nivel="recomendado" role="button" tabindex="0" aria-pressed="false">
+    <div class="config-card-header">
+      <div class="config-card-badge badge-rec">Configuração Recomendada</div>
+      <div class="config-card-preco">{{ brl_int(faixa_auto.preco_rec) }}</div>
+      <div class="config-card-sub">Preço médio estimado</div>
+      <div class="config-variacao">{{ brl_int(faixa_auto.rec_baixo) }} – {{ brl_int(faixa_auto.rec_alto) }}</div>
+    </div>
+    <div class="config-card-body">
+      <div class="config-linha">
+        <span class="config-comp"><span class="comp-icon">🧠</span>Processador</span>
+        <span class="config-val">{{ calc.componentes | selectattr('id','equalto','cpu') | map(attribute='rec_txt') | first }}</span>
+      </div>
+      <div class="config-linha">
+        <span class="config-comp"><span class="comp-icon">💾</span>Memória RAM</span>
+        <span class="config-val">{{ calc.componentes | selectattr('id','equalto','ram') | map(attribute='rec_txt') | first }}</span>
+      </div>
+      <div class="config-linha">
+        <span class="config-comp"><span class="comp-icon">💿</span>Armazenamento</span>
+        <span class="config-val">{{ calc.componentes | selectattr('id','equalto','ssd') | map(attribute='rec_txt') | first }}</span>
+      </div>
+      <div class="config-linha">
+        <span class="config-comp"><span class="comp-icon">🖥️</span>Placa de vídeo</span>
+        <span class="config-val">{{ calc.componentes | selectattr('id','equalto','gpu') | map(attribute='rec_txt') | first }}</span>
+      </div>
+    </div>
+    <div class="config-card-footer">
+      <div class="config-hint">Clique para selecionar</div>
+      <div class="config-check">✓ Selecionado</div>
+    </div>
+  </div>
+
+</div><!-- /.config-selector -->
+
+<p class="nota" style="margin:6px 0 28px">
+  Preços estimados com base em componentes de mercado, sem considerar marca ou modelo. A variação de ±20% reflete diferenças de fornecedor, região e momento da compra.
 </p>
 
-<div class="aviso info">
-  <b>Valor médio em reais como referência para as propostas.</b>
-  No menor preço, a proposta vencedora tende ao piso. A ferramenta calcula a média entre o preço da
-  configuração mínima e o da recomendada e mostra onde cada proposta recebida fica nessa régua.
+{% if calc.ajustes %}
+<details style="margin:0 0 24px">
+  <summary style="cursor:pointer;font-size:13px;color:var(--texto-2);user-select:none">
+    Ver ajustes aplicados pelo sistema ({{ calc.ajustes|length }})
+  </summary>
+  <ul class="nota" style="margin-top:8px;padding-left:18px">
+    {% for a in calc.ajustes %}<li>{{ a }}</li>{% endfor %}
+  </ul>
+</details>
+{% endif %}
+
+<!-- ═══ ESPECIFICAÇÃO ══════════════════════════ -->
+<h2 id="especificacao">📄 Texto para o edital</h2>
+
+<div id="spec-aviso-nenhum" class="aviso info">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+  Selecione uma configuração acima para ver o texto correspondente.
 </div>
 
-<h2>Configuração mínima, alvo e recomendada</h2>
-{% with mostrar_alvo = true %}{% include "parciais/tabela_requisitos.html" %}{% endwith %}
-<p class="nota">No processador e no vídeo, o alvo é arredondado para cima, porque são classes inteiras.</p>
+<div id="spec-bloco" style="display:none">
+  <textarea id="spec" class="texto-area" rows="8" data-verificar-termos="#alerta-termos" readonly></textarea>
+  <div id="alerta-termos" class="aviso atencao" hidden></div>
+  <div class="acoes"><button type="button" class="botao secundario" data-copiar="#spec">📋 Copiar texto</button></div>
+</div>
 
-<!-- ================= RÉGUA DE PREÇO ================= -->
-<h2 id="preco">Régua de preço</h2>
-<p class="nota">A ferramenta não consulta preços: informe os valores da pesquisa de preços do órgão
-   para a configuração mínima e para a recomendada.</p>
+<!-- ═══ JUSTIFICATIVA ══════════════════════════ -->
+<h2>📝 Justificativa para o ETP</h2>
+
+<div id="just-aviso-nenhum" class="aviso info">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+  Selecione uma configuração acima para ver a justificativa correspondente.
+</div>
+
+<div id="just-bloco" style="display:none">
+  <ul id="justificativa" class="lista-justificativa"></ul>
+  <div class="acoes"><button type="button" class="botao secundario" data-copiar="#justificativa">📋 Copiar justificativa</button></div>
+</div>
+
+<!-- ═══ COMPARAR PROPOSTAS ══════════════════════ -->
+<h2 id="preco">📊 Comparar propostas recebidas</h2>
 
 <form method="post" action="{{ url_for('resultado.precos') }}" id="form-precos">
   <div class="grade-campos">
     <div class="campo">
       <label class="rotulo" for="preco_min">Preço da configuração mínima (R$)</label>
-      <input type="text" id="preco_min" name="preco_min" inputmode="decimal" placeholder="ex.: 4.200,00"
+      <input type="text" id="preco_min" name="preco_min" inputmode="decimal"
+             placeholder="ex.: 4.200,00"
              value="{{ '%.2f'|format(precos.min)|replace('.', ',') if precos.min is not none }}">
     </div>
     <div class="campo">
       <label class="rotulo" for="preco_rec">Preço da configuração recomendada (R$)</label>
-      <input type="text" id="preco_rec" name="preco_rec" inputmode="decimal" placeholder="ex.: 6.800,00"
+      <input type="text" id="preco_rec" name="preco_rec" inputmode="decimal"
+             placeholder="ex.: 6.800,00"
              value="{{ '%.2f'|format(precos.rec)|replace('.', ',') if precos.rec is not none }}">
     </div>
     <div class="campo">
       <label class="rotulo" for="fonte">Fonte dos preços</label>
-      <input type="text" id="fonte" name="fonte" placeholder="Pesquisa de preços do órgão (a informar)"
+      <input type="text" id="fonte" name="fonte"
+             placeholder="Ex.: Pesquisa de preços do órgão"
              value="{{ precos.fonte }}">
     </div>
+    {% if regua %}
     <div class="campo destaque">
-      <span class="rotulo">Valor médio</span>
-      <b class="valor-grande">{{ regua.media|brl if regua else '—' }}</b>
-      {% if regua %}<small>({{ regua.minimo|brl_curto }} + {{ regua.recomendado|brl_curto }}) ÷ 2</small>{% endif %}
+      <span class="rotulo">Valor médio de referência</span>
+      <b class="valor-grande">{{ regua.media|brl }}</b>
+      <small>({{ regua.minimo|brl_curto }} + {{ regua.recomendado|brl_curto }}) ÷ 2</small>
     </div>
+    {% endif %}
   </div>
-
   <h3>Propostas recebidas <small>(opcional)</small></h3>
   <div id="propostas">
     {% for p in (precos.propostas or []) %}
@@ -60,96 +183,177 @@
     </div>
     {% endfor %}
   </div>
-  <p class="acoes">
+  <div class="acoes">
     <button type="button" class="botao secundario pequeno" id="add-proposta">+ Adicionar proposta</button>
     <button type="submit" class="botao">Calcular régua</button>
-  </p>
+  </div>
 </form>
 
 {% if regua %}
 <div class="regua-bloco">
   <div class="regua">
     <div class="regua-rotulos">
-      <div class="rotulo-marca" style="left: {{ regua.pct_min }}%">Mínima<br><b>{{ regua.minimo|brl_curto }}</b></div>
-      <div class="rotulo-marca media" style="left: {{ regua.pct_media }}%">Valor médio<br><b>{{ regua.media|brl_curto }}</b></div>
-      <div class="rotulo-marca" style="left: {{ regua.pct_rec }}%">Recomendada<br><b>{{ regua.recomendado|brl_curto }}</b></div>
+      <div class="rotulo-marca" style="left:{{ regua.pct_min }}%">Mínima<br><b>{{ regua.minimo|brl_curto }}</b></div>
+      <div class="rotulo-marca media" style="left:{{ regua.pct_media }}%">Média<br><b>{{ regua.media|brl_curto }}</b></div>
+      <div class="rotulo-marca" style="left:{{ regua.pct_rec }}%">Recomendada<br><b>{{ regua.recomendado|brl_curto }}</b></div>
     </div>
     <div class="regua-barra">
       {% for s in regua.segmentos %}
-      <div class="seg seg-{{ s.cls }}" style="left: {{ s.left }}%; width: {{ s.width }}%"></div>
+      <div class="seg seg-{{ s.cls }}" style="left:{{ s.left }}%;width:{{ s.width }}%"></div>
       {% endfor %}
-      <div class="traco" style="left: {{ regua.pct_min }}%"></div>
-      <div class="traco media" style="left: {{ regua.pct_media }}%"></div>
-      <div class="traco" style="left: {{ regua.pct_rec }}%"></div>
+      <div class="traco" style="left:{{ regua.pct_min }}%"></div>
+      <div class="traco media" style="left:{{ regua.pct_media }}%"></div>
+      <div class="traco" style="left:{{ regua.pct_rec }}%"></div>
       {% for p in regua.propostas %}
-      <div class="ponto" style="left: {{ p.pct }}%" title="{{ p.nome }}: {{ p.valor|brl }}">{{ p.n }}</div>
+      <div class="ponto" style="left:{{ p.pct }}%" title="{{ p.nome }}: {{ p.valor|brl }}">{{ p.n }}</div>
       {% endfor %}
     </div>
-    <ul class="legenda">
-      {% for s in regua.segmentos %}<li><i class="seg-{{ s.cls }}"></i>{{ s.rotulo }}</li>{% endfor %}
-    </ul>
+    <ul class="legenda">{% for s in regua.segmentos %}<li><i class="seg-{{ s.cls }}"></i>{{ s.rotulo }}</li>{% endfor %}</ul>
   </div>
-
   {% if regua.propostas %}
-  <table class="tabela">
-    <thead><tr><th>#</th><th>Proposta recebida</th><th>Valor</th><th>Posição</th><th>O que o responsável deve verificar</th></tr></thead>
+  <div class="rolagem">
+  <table class="tabela" style="margin-top:14px">
+    <thead><tr><th>#</th><th>Proposta</th><th>Valor</th><th>Posição</th><th>O que verificar</th></tr></thead>
     <tbody>
       {% for p in regua.propostas %}
       <tr>
-        <td>{{ p.n }}</td>
-        <td><b>{{ p.nome }}</b></td>
-        <td>{{ p.valor|brl }}</td>
+        <td>{{ p.n }}</td><td><b>{{ p.nome }}</b></td><td>{{ p.valor|brl }}</td>
         <td><span class="selo pos-{{ p.pos }}">{{ p.pos_txt }}</span></td>
         <td>{{ p.verificar }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
+  </div>
   {% endif %}
-  <p class="nota">A ferramenta não escolhe vencedor nem desclassifica proposta. A média de dois preços não
-     substitui a pesquisa de preços que define o valor estimado da contratação.</p>
 </div>
 {% endif %}
 
-<!-- ================= ESPECIFICAÇÃO E JUSTIFICATIVA ================= -->
-<h2 id="especificacao">Especificação por desempenho (texto para o edital)</h2>
-
-<form method="post" action="{{ url_for('resultado.nivel') }}" class="em-linha-form">
-  <span class="rotulo">Nível exigido no texto:</span>
-  <label class="linha"><input type="radio" name="nivel" value="alvo" {% if nivel == 'alvo' %}checked{% endif %}>
-    Alvo (média entre mínimo e recomendado)</label>
-  <label class="linha"><input type="radio" name="nivel" value="minimo" {% if nivel == 'minimo' %}checked{% endif %}>
-    Mínimo (piso)</label>
-  <button class="botao pequeno secundario" type="submit">Aplicar</button>
-</form>
-
-<textarea id="spec" class="texto-area" rows="8" data-verificar-termos="#alerta-termos">{{ especificacao }}</textarea>
-<div id="alerta-termos" class="aviso atencao" hidden></div>
-<p class="nota">Os campos entre colchetes dependem de uma regra oficial para expressar desempenho sem citar fabricante.
-   Você pode editar o texto: se aparecer marca, linha de produto ou geração, o programa avisa.</p>
-<p class="acoes"><button type="button" class="botao secundario" data-copiar="#spec">Copiar texto</button></p>
-
-<h2>Justificativa para o Estudo Técnico Preliminar</h2>
-<ul id="justificativa" class="lista-justificativa">
-  {% for item in justificativa %}<li>{{ item }}</li>{% endfor %}
-</ul>
-<p class="acoes"><button type="button" class="botao secundario" data-copiar="#justificativa">Copiar texto</button></p>
-
-<div class="aviso atencao">
-  <b>Atenção:</b> o alvo é uma premissa do projeto. Exigir acima do mínimo também precisa de justificativa,
-  e o texto gerado já traz o motivo (a proposta de menor preço tende ao piso).
-</div>
-
-<p class="acoes entre">
-  <a href="{{ url_for('etapa2.pagina') }}">← Voltar para Detalhes de uso</a>
+<div class="acoes entre" style="margin-top:36px">
+  <a href="{{ url_for('etapa2.pagina') }}">← Voltar</a>
   <span>
     <a class="botao secundario" href="{{ url_for('relatorio.pagina') }}" target="_blank">Ver relatório</a>
-    <a class="botao" href="{{ url_for('relatorio.pagina', baixar=1) }}">Exportar relatório</a>
+    <a class="botao" href="{{ url_for('relatorio.pagina', baixar=1) }}">⬇ Exportar</a>
   </span>
-</p>
+</div>
+
+<!-- dados dos textos embutidos para o JS -->
+<script id="texto-min" type="application/json">{{ especificacao_min | tojson }}</script>
+<script id="texto-rec" type="application/json">{{ especificacao_rec | tojson }}</script>
+<script id="just-min"  type="application/json">{{ justificativa_min | tojson }}</script>
+<script id="just-rec"  type="application/json">{{ justificativa_rec | tojson }}</script>
 
 {% endblock %}
-
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/resultado.js') }}"></script>
+<script>
+// ── dados passados pelo servidor ──────────────────────────────────
+const precoMin = {{ faixa_auto.preco_min }};
+const precoRec = {{ faixa_auto.preco_rec }};
+const minBaixo = {{ faixa_auto.min_baixo }};
+const minAlto  = {{ faixa_auto.min_alto }};
+const recBaixo = {{ faixa_auto.rec_baixo }};
+const recAlto  = {{ faixa_auto.rec_alto }};
+
+const textoMin   = JSON.parse(document.getElementById('texto-min').textContent);
+const textoRec   = JSON.parse(document.getElementById('texto-rec').textContent);
+const justMin    = JSON.parse(document.getElementById('just-min').textContent);
+const justRec    = JSON.parse(document.getElementById('just-rec').textContent);
+
+// ── elementos ─────────────────────────────────────────────────────
+const cardMin        = document.getElementById('card-min');
+const cardRec        = document.getElementById('card-rec');
+const fill           = document.getElementById('barra-fill');
+const thumb          = document.getElementById('barra-thumb');
+const barLabel       = document.getElementById('barra-label');
+const barValor       = document.getElementById('barra-valor');
+const barVar         = document.getElementById('barra-variacao');
+const barDest        = document.getElementById('barra-destaque');
+const barNenhum      = document.getElementById('barra-nenhum');
+const wrapper        = document.getElementById('barra-wrapper');
+const specTextarea   = document.getElementById('spec');
+const specBloco      = document.getElementById('spec-bloco');
+const specAviso      = document.getElementById('spec-aviso-nenhum');
+const justLista      = document.getElementById('justificativa');
+const justBloco      = document.getElementById('just-bloco');
+const justAviso      = document.getElementById('just-aviso-nenhum');
+
+let nivelAtual = null;
+
+function fmt(n) {
+  return 'R$ ' + Math.round(n).toLocaleString('pt-BR');
+}
+
+function atualizarTextos(isMin) {
+  // especificação
+  specTextarea.value = isMin ? textoMin : textoRec;
+  specBloco.style.display  = '';
+  specAviso.style.display  = 'none';
+
+  // justificativa
+  const itens = isMin ? justMin : justRec;
+  justLista.innerHTML = itens.map(i => `<li>${i}</li>`).join('');
+  justBloco.style.display  = '';
+  justAviso.style.display  = 'none';
+}
+
+function limparTextos() {
+  specBloco.style.display  = 'none';
+  specAviso.style.display  = '';
+  justBloco.style.display  = 'none';
+  justAviso.style.display  = '';
+}
+
+function select(nivel) {
+  // toggle: clicou no mesmo → deseleciona
+  if (nivelAtual === nivel) {
+    deselect();
+    return;
+  }
+  nivelAtual = nivel;
+  const isMin = nivel === 'minimo';
+
+  // cards
+  cardMin.classList.toggle('selecionado', isMin);
+  cardRec.classList.toggle('selecionado', !isMin);
+  cardMin.setAttribute('aria-pressed', isMin ? 'true' : 'false');
+  cardRec.setAttribute('aria-pressed', isMin ? 'false' : 'true');
+
+  // barra
+  const pct = isMin ? 0 : 100;
+  fill.style.width = pct + '%';
+  thumb.style.left = pct + '%';
+  thumb.classList.add('visivel');
+
+  barLabel.textContent = isMin ? 'Configuração Mínima' : 'Configuração Recomendada';
+  barValor.textContent = fmt(isMin ? precoMin : precoRec);
+  barVar.textContent   = fmt(isMin ? minBaixo : recBaixo) + ' – ' + fmt(isMin ? minAlto : recAlto);
+  barDest.style.display   = '';
+  barNenhum.style.display = 'none';
+  wrapper.classList.toggle('barra-rec-ativo', !isMin);
+
+  // textos
+  atualizarTextos(isMin);
+}
+
+function deselect() {
+  nivelAtual = null;
+  cardMin.classList.remove('selecionado');
+  cardRec.classList.remove('selecionado');
+  cardMin.setAttribute('aria-pressed', 'false');
+  cardRec.setAttribute('aria-pressed', 'false');
+  fill.style.width        = '0%';
+  thumb.style.left        = '0%';
+  thumb.classList.remove('visivel');
+  barDest.style.display   = 'none';
+  barNenhum.style.display = '';
+  wrapper.classList.remove('barra-rec-ativo');
+  limparTextos();
+}
+
+cardMin.addEventListener('click', () => select('minimo'));
+cardRec.addEventListener('click', () => select('recomendado'));
+cardMin.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') select('minimo'); });
+cardRec.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') select('recomendado'); });
+</script>
 {% endblock %}

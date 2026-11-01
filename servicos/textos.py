@@ -4,14 +4,14 @@ from servicos.formatacao import brl, fmt_ram, fmt_ssd
 
 
 def _valores(calc, nivel):
-    chave = "minimo" if nivel == "minimo" else "alvo"
-    return calc[chave]
+    """nivel: "minimo" ou "recomendado"."""
+    return calc["minimo"] if nivel == "minimo" else calc["recomendado"]
 
 
 # ---------------------------------------------------------------------------
 # Licitação pública: especificação por desempenho (sem marca, modelo ou geração)
 # ---------------------------------------------------------------------------
-def especificacao(calc, nivel="alvo"):
+def especificacao(calc, nivel="recomendado"):
     v = _valores(calc, nivel)
     linhas = [
         f"Memória RAM: no mínimo {fmt_ram(v['ram'])}.",
@@ -34,7 +34,7 @@ def especificacao(calc, nivel="alvo"):
 def justificativa(est_ctx):
     """Lista de frases para o Estudo Técnico Preliminar.
 
-    est_ctx: dict com finalidade_nome, softwares, calc, nivel, precos (ou None)
+    est_ctx: dict com finalidade_nome, softwares, calc, nivel ("minimo" ou "recomendado"), precos (ou None)
     """
     calc = est_ctx["calc"]
     cond = calc["cond"]
@@ -51,12 +51,11 @@ def justificativa(est_ctx):
         + (f" e {cond['dados_locais_gb']} GB de dados guardados localmente." if cond["dados_locais_gb"] else
            " e sem dados guardados localmente."),
     ]
-    if nivel == "alvo":
+    if nivel == "recomendado":
         itens.append(
-            "A especificação adota o alvo, calculado como a média entre o mínimo e o recomendado. "
-            "No critério de menor preço, a proposta vencedora tende ao piso da especificação; "
-            "exigir acima do mínimo é uma premissa deste projeto e se justifica para que a proposta "
-            "de menor preço cubra a necessidade real de uso."
+            "A especificação adota a configuração recomendada. No critério de menor preço, a proposta "
+            "vencedora tende ao piso da especificação; exigir acima do mínimo também precisa de "
+            "justificativa, e aqui o motivo é que a proposta de menor preço cubra a necessidade real de uso."
         )
     else:
         itens.append(

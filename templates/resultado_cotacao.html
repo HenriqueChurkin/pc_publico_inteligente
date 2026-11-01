@@ -2,17 +2,135 @@
 {% block titulo %}03 Resultado · {{ cfg.NOME_SITE }}{% endblock %}
 {% block conteudo %}
 
-<p class="etapa">Etapa 03 / 03 · Cotação com fornecedores</p>
-<h1>Pedido de orçamento e pontos de busca</h1>
-<p class="lead">
-  Finalidade selecionada: <b>{{ finalidade_nome }}</b> · contratação direta · sem exibição de preços
+<span class="etapa-badge">Passo 3 de 3 · Cotação com fornecedores</span>
+<h1>Pedido de orçamento</h1>
+<p class="lead">Finalidade: <b>{{ finalidade_nome }}</b> · vida útil de {{ cond.vida_util }} anos</p>
+
+{% macro brl_int(n) %}R$ {{ '{:,.0f}'.format(n).replace(',', '.') }}{% endmacro %}
+
+<!-- ═══════════════════════════════════════════
+     SELETOR MÍNIMO ←—barra—→ RECOMENDADO
+     ═══════════════════════════════════════════ -->
+<div class="config-selector" id="config-selector">
+
+  <!-- Card Mínimo -->
+  <div class="config-card" id="card-min" data-nivel="minimo" role="button" tabindex="0" aria-pressed="false">
+    <div class="config-card-header">
+      <div class="config-card-badge badge-min">Configuração Mínima</div>
+      <div class="config-card-preco">{{ brl_int(faixa_auto.preco_min) }}</div>
+      <div class="config-card-sub">Preço médio estimado</div>
+      <div class="config-variacao">{{ brl_int(faixa_auto.min_baixo) }} – {{ brl_int(faixa_auto.min_alto) }}</div>
+    </div>
+    <div class="config-card-body">
+      <div class="config-linha">
+        <span class="config-comp"><span class="comp-icon">🧠</span>Processador</span>
+        <span class="config-val">{{ calc.componentes | selectattr('id','equalto','cpu') | map(attribute='min_txt') | first }}</span>
+      </div>
+      <div class="config-linha">
+        <span class="config-comp"><span class="comp-icon">💾</span>Memória RAM</span>
+        <span class="config-val">{{ calc.componentes | selectattr('id','equalto','ram') | map(attribute='min_txt') | first }}</span>
+      </div>
+      <div class="config-linha">
+        <span class="config-comp"><span class="comp-icon">💿</span>Armazenamento</span>
+        <span class="config-val">{{ calc.componentes | selectattr('id','equalto','ssd') | map(attribute='min_txt') | first }}</span>
+      </div>
+      <div class="config-linha">
+        <span class="config-comp"><span class="comp-icon">🖥️</span>Placa de vídeo</span>
+        <span class="config-val">{{ calc.componentes | selectattr('id','equalto','gpu') | map(attribute='min_txt') | first }}</span>
+      </div>
+    </div>
+    <div class="config-card-footer">
+      <div class="config-hint">Clique para selecionar</div>
+      <div class="config-check">✓ Selecionado</div>
+    </div>
+  </div>
+
+  <!-- Barra central -->
+  <div class="barra-preco-wrapper" id="barra-wrapper">
+    <div class="barra-preco-container">
+      <div class="barra-preco-trilho">
+        <div class="barra-preco-fill" id="barra-fill"></div>
+        <div class="barra-preco-thumb" id="barra-thumb"></div>
+      </div>
+      <div class="barra-preco-rotulos">
+        <span>Mínimo</span>
+        <span>Recomendado</span>
+      </div>
+    </div>
+    <div class="barra-preco-destaque" id="barra-destaque" style="display:none">
+      <div class="barra-destaque-label" id="barra-label"></div>
+      <div class="barra-destaque-valor" id="barra-valor"></div>
+      <div class="barra-destaque-variacao" id="barra-variacao"></div>
+    </div>
+    <div class="barra-nenhum" id="barra-nenhum">← Clique em uma<br>configuração</div>
+  </div>
+
+  <!-- Card Recomendado -->
+  <div class="config-card config-card-rec" id="card-rec" data-nivel="recomendado" role="button" tabindex="0" aria-pressed="false">
+    <div class="config-card-header">
+      <div class="config-card-badge badge-rec">Configuração Recomendada</div>
+      <div class="config-card-preco">{{ brl_int(faixa_auto.preco_rec) }}</div>
+      <div class="config-card-sub">Preço médio estimado</div>
+      <div class="config-variacao">{{ brl_int(faixa_auto.rec_baixo) }} – {{ brl_int(faixa_auto.rec_alto) }}</div>
+    </div>
+    <div class="config-card-body">
+      <div class="config-linha">
+        <span class="config-comp"><span class="comp-icon">🧠</span>Processador</span>
+        <span class="config-val">{{ calc.componentes | selectattr('id','equalto','cpu') | map(attribute='rec_txt') | first }}</span>
+      </div>
+      <div class="config-linha">
+        <span class="config-comp"><span class="comp-icon">💾</span>Memória RAM</span>
+        <span class="config-val">{{ calc.componentes | selectattr('id','equalto','ram') | map(attribute='rec_txt') | first }}</span>
+      </div>
+      <div class="config-linha">
+        <span class="config-comp"><span class="comp-icon">💿</span>Armazenamento</span>
+        <span class="config-val">{{ calc.componentes | selectattr('id','equalto','ssd') | map(attribute='rec_txt') | first }}</span>
+      </div>
+      <div class="config-linha">
+        <span class="config-comp"><span class="comp-icon">🖥️</span>Placa de vídeo</span>
+        <span class="config-val">{{ calc.componentes | selectattr('id','equalto','gpu') | map(attribute='rec_txt') | first }}</span>
+      </div>
+    </div>
+    <div class="config-card-footer">
+      <div class="config-hint">Clique para selecionar</div>
+      <div class="config-check">✓ Selecionado</div>
+    </div>
+  </div>
+
+</div><!-- /.config-selector -->
+
+<p class="nota" style="margin:6px 0 28px">
+  Estimativa baseada em componentes de mercado, sem marca definida. Variação de ±25% por fornecedor, região e data da compra.
 </p>
 
-<h2>Configuração mínima e recomendada</h2>
-{% with mostrar_alvo = false %}{% include "parciais/tabela_requisitos.html" %}{% endwith %}
+{% if calc.ajustes %}
+<details style="margin:0 0 24px">
+  <summary style="cursor:pointer;font-size:13px;color:var(--texto-2);user-select:none">
+    Ver ajustes aplicados ({{ calc.ajustes|length }})
+  </summary>
+  <ul class="nota" style="margin-top:8px;padding-left:18px">
+    {% for a in calc.ajustes %}<li>{{ a }}</li>{% endfor %}
+  </ul>
+</details>
+{% endif %}
 
-<!-- ================= REGIÕES ================= -->
-<h2 id="regioes">Regiões de busca</h2>
+<!-- ═══ PEDIDO DE ORÇAMENTO ════════════════════ -->
+<h2>📋 Texto do pedido</h2>
+
+<div id="pedido-aviso-nenhum" class="aviso info">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+  Selecione uma configuração acima para exibir o texto do pedido.
+</div>
+
+<div id="pedido-bloco" style="display:none">
+  <textarea id="pedido-texto" class="texto-area" rows="7" readonly>{{ pedido }}</textarea>
+  <p class="nota">Envie o mesmo texto para todos os fornecedores, mantendo igualdade entre as propostas (IN SEGES/ME nº 65/2021, art. 5º).</p>
+  <div class="acoes"><button type="button" class="botao secundario" onclick="navigator.clipboard.writeText(document.getElementById('pedido-texto').value)">📋 Copiar pedido</button></div>
+</div>
+
+<!-- ═══ REGIÕES DE BUSCA ═══════════════════════ -->
+<h2 id="regioes">📍 Regiões de busca</h2>
+
 <div class="chips">
   {% for e in estados_sel %}
   <form method="post" action="{{ url_for('resultado.estados') }}" class="chip">
@@ -24,81 +142,74 @@
   {% endfor %}
 </div>
 
-<form method="post" action="{{ url_for('resultado.estados') }}" class="em-linha-form">
-  <input type="hidden" name="acao" value="adicionar">
-  <label for="uf" class="rotulo">Adicionar estado:</label>
-  <select name="uf" id="uf">
-    {% for e in estados if e[0] not in est.estados %}
-    <option value="{{ e[0] }}">{{ e[1] }}</option>
-    {% endfor %}
-  </select>
-  <button class="botao pequeno" type="submit">Adicionar</button>
-</form>
-<form method="post" action="{{ url_for('resultado.estados') }}" class="em-linha-form">
-  <input type="hidden" name="acao" value="todos">
-  <button class="botao pequeno secundario" type="submit">Selecionar todos (pesquisa nacional)</button>
-</form>
-<p class="nota">
-  Valor da consulta (modelo de validação, sem cobrança no programa):
-  {% if valor_consulta %}<b>R$ {{ valor_consulta }}</b>{% else %}<b>faixa ainda não definida</b> para {{ estados_sel|length }} estados{% endif %}.
-</p>
-
-<!-- ================= PEDIDO + CONTATOS ================= -->
-<div class="duas-colunas">
-  <section>
-    <h2>Pedido de orçamento (texto padrão)</h2>
-    <pre class="texto-box" id="pedido">{{ pedido }}</pre>
-    <p class="nota">O mesmo texto é enviado a todas as empresas, para manter a igualdade entre elas.</p>
-    <p class="acoes"><button type="button" class="botao secundario" data-copiar="#pedido">Copiar pedido de orçamento</button></p>
-  </section>
-
-  <section id="contatos">
-    <h2>Registro dos contatos</h2>
-    {% if contatos %}
-    <table class="tabela pequena">
-      <thead><tr><th>Empresa</th><th>Contatada em</th><th>Resposta</th><th></th></tr></thead>
-      <tbody>
-        {% for c in contatos %}
-        <tr>
-          <td><b>{{ c.empresa }}</b></td>
-          <td>{{ c.data|data_br }}</td>
-          <td>
-            <form method="post" action="{{ url_for('resultado.contatos') }}" class="em-linha-form">
-              <input type="hidden" name="acao" value="atualizar">
-              <input type="hidden" name="indice" value="{{ loop.index0 }}">
-              <select name="resposta" onchange="this.form.submit()">
-                {% for r in respostas %}<option {% if r == c.resposta %}selected{% endif %}>{{ r }}</option>{% endfor %}
-              </select>
-            </form>
-          </td>
-          <td>
-            <form method="post" action="{{ url_for('resultado.contatos') }}">
-              <input type="hidden" name="acao" value="remover">
-              <input type="hidden" name="indice" value="{{ loop.index0 }}">
-              <button class="botao pequeno secundario" type="submit">Remover</button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-    <p class="nota">Nenhum contato registrado ainda.</p>
-    {% endif %}
-
-    <form method="post" action="{{ url_for('resultado.contatos') }}" class="form-contato">
-      <input type="hidden" name="acao" value="adicionar">
-      <input type="text" name="empresa" placeholder="Empresa contatada" required>
-      <input type="date" name="data" value="{{ hoje }}">
-      <select name="resposta">{% for r in respostas %}<option>{{ r }}</option>{% endfor %}</select>
-      <button class="botao pequeno" type="submit">Registrar contato</button>
-    </form>
-    <p class="nota">A ferramenta não recomenda vencedor. A comparação das propostas é feita pelo órgão.</p>
-  </section>
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
+  <form method="post" action="{{ url_for('resultado.estados') }}" class="em-linha-form">
+    <input type="hidden" name="acao" value="adicionar">
+    <select name="uf">
+      {% for e in estados if e[0] not in estados_sel | map(attribute=0) | list %}
+      <option value="{{ e[0] }}">{{ e[1] }}</option>
+      {% endfor %}
+    </select>
+    <button class="botao pequeno" type="submit">Adicionar estado</button>
+  </form>
+  <form method="post" action="{{ url_for('resultado.estados') }}">
+    <input type="hidden" name="acao" value="todos">
+    <button class="botao pequeno secundario" type="submit">Todos (nacional)</button>
+  </form>
 </div>
 
-<!-- ================= PONTOS DE BUSCA ================= -->
-<h2 id="pontos">Pontos de busca por estado</h2>
+{% if valor_consulta %}
+<p class="nota" style="margin-top:10px">Valor estimado da consulta: <b>R$ {{ valor_consulta }}</b></p>
+{% endif %}
+
+<!-- ═══ REGISTRO DE CONTATOS ══════════════════ -->
+<h2 id="contatos">📞 Fornecedores contatados</h2>
+
+{% if contatos %}
+<div class="rolagem">
+<table class="tabela pequena">
+  <thead><tr><th>Empresa</th><th>Data</th><th>Situação</th><th></th></tr></thead>
+  <tbody>
+    {% for c in contatos %}
+    <tr>
+      <td><b>{{ c.empresa }}</b></td>
+      <td>{{ c.data | data_br }}</td>
+      <td>
+        <form method="post" action="{{ url_for('resultado.contatos') }}" class="em-linha-form">
+          <input type="hidden" name="acao" value="atualizar">
+          <input type="hidden" name="indice" value="{{ loop.index0 }}">
+          <select name="resposta" onchange="this.form.submit()">
+            {% for r in respostas %}<option {% if r == c.resposta %}selected{% endif %}>{{ r }}</option>{% endfor %}
+          </select>
+        </form>
+      </td>
+      <td>
+        <form method="post" action="{{ url_for('resultado.contatos') }}">
+          <input type="hidden" name="acao" value="remover">
+          <input type="hidden" name="indice" value="{{ loop.index0 }}">
+          <button class="botao pequeno secundario" type="submit">Remover</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="nota">Nenhum contato registrado ainda.</p>
+{% endif %}
+
+<form method="post" action="{{ url_for('resultado.contatos') }}" class="form-contato" style="margin-top:12px">
+  <input type="hidden" name="acao" value="adicionar">
+  <input type="text" name="empresa" placeholder="Nome da empresa" required>
+  <input type="date" name="data" value="{{ hoje }}">
+  <select name="resposta">{% for r in respostas %}<option>{{ r }}</option>{% endfor %}</select>
+  <button class="botao pequeno" type="submit">Registrar</button>
+</form>
+
+<!-- ═══ PONTOS DE BUSCA ════════════════════════ -->
+<h2 id="pontos">🔎 Onde buscar por estado</h2>
+
 <div class="grade-estados">
   {% for p in pontos %}
   <section class="caixa">
@@ -108,13 +219,12 @@
     {% for item in cat.itens %}
     <div class="ponto-busca">
       <div>
-        <b>{{ item.nome }}</b>{% if item.ficticio %} <small>(exemplo fictício)</small>{% endif %}<br>
-        <small>{{ item.local }} · atende pessoa jurídica: {{ item.atende_pj }}<br>
-          última conferência: {{ item.ultima_conferencia|data_br if item.ultima_conferencia else 'não conferida' }}</small>
+        <b>{{ item.nome }}</b>{% if item.ficticio %} <small>(exemplo)</small>{% endif %}<br>
+        <small>{{ item.local }} · PJ: {{ item.atende_pj }} · conferido: {{ item.ultima_conferencia | data_br if item.ultima_conferencia else '—' }}</small>
       </div>
       <form method="post" action="{{ url_for('resultado.conferido') }}">
         <input type="hidden" name="id" value="{{ item.id }}">
-        <button class="botao pequeno secundario" type="submit" title="Registra a data de hoje como última conferência">Conferir</button>
+        <button class="botao pequeno secundario" type="submit">Conferir</button>
       </form>
     </div>
     {% endfor %}
@@ -123,19 +233,91 @@
   {% endfor %}
 </div>
 
-<div class="aviso atencao">
-  <b>Regras da lista:</b> ordem alfabética dentro de cada categoria, sem ordem de preferência, sem preço,
-  sem avaliação e com data da última conferência de cada empresa. Varejo comum pode não emitir orçamento
-  formal para órgão público: confirme o campo “atende pessoa jurídica” de cada empresa.
-</div>
-<p class="nota">Apoio à análise técnica. Confirme com o jurídico o enquadramento da contratação e as regras de pesquisa de preços.</p>
+<p class="nota" style="margin-top:16px">Empresas em ordem alfabética, sem preferência. Confirme se a empresa emite NF para pessoa jurídica antes de enviar o pedido.</p>
 
-<p class="acoes entre">
-  <a href="{{ url_for('etapa2.pagina') }}">← Voltar para Detalhes de uso</a>
+<!-- ═══ AÇÕES ══════════════════════════════════ -->
+<div class="acoes entre" style="margin-top:36px">
+  <a href="{{ url_for('etapa2.pagina') }}">← Voltar</a>
   <span>
     <a class="botao secundario" href="{{ url_for('relatorio.pagina') }}" target="_blank">Ver relatório</a>
-    <a class="botao" href="{{ url_for('relatorio.pagina', baixar=1) }}">Exportar relatório</a>
+    <a class="botao" href="{{ url_for('relatorio.pagina', baixar=1) }}">⬇ Exportar</a>
   </span>
-</p>
+</div>
 
+{% endblock %}
+{% block scripts %}
+<script>
+const precoMin = {{ faixa_auto.preco_min }};
+const precoRec = {{ faixa_auto.preco_rec }};
+const minBaixo = {{ faixa_auto.min_baixo }};
+const minAlto  = {{ faixa_auto.min_alto }};
+const recBaixo = {{ faixa_auto.rec_baixo }};
+const recAlto  = {{ faixa_auto.rec_alto }};
+
+const cardMin      = document.getElementById('card-min');
+const cardRec      = document.getElementById('card-rec');
+const fill         = document.getElementById('barra-fill');
+const thumb        = document.getElementById('barra-thumb');
+const barLabel     = document.getElementById('barra-label');
+const barValor     = document.getElementById('barra-valor');
+const barVar       = document.getElementById('barra-variacao');
+const barDest      = document.getElementById('barra-destaque');
+const barNenhum    = document.getElementById('barra-nenhum');
+const wrapper      = document.getElementById('barra-wrapper');
+const pedidoBloco  = document.getElementById('pedido-bloco');
+const pedidoAviso  = document.getElementById('pedido-aviso-nenhum');
+
+let nivelAtual = null;
+
+function fmt(n) {
+  return 'R$ ' + Math.round(n).toLocaleString('pt-BR');
+}
+
+function select(nivel) {
+  if (nivelAtual === nivel) { deselect(); return; }
+  nivelAtual = nivel;
+  const isMin = nivel === 'minimo';
+
+  cardMin.classList.toggle('selecionado', isMin);
+  cardRec.classList.toggle('selecionado', !isMin);
+  cardMin.setAttribute('aria-pressed', isMin ? 'true' : 'false');
+  cardRec.setAttribute('aria-pressed', isMin ? 'false' : 'true');
+
+  const pct = isMin ? 0 : 100;
+  fill.style.width = pct + '%';
+  thumb.style.left = pct + '%';
+  thumb.classList.add('visivel');
+
+  barLabel.textContent = isMin ? 'Configuração Mínima' : 'Configuração Recomendada';
+  barValor.textContent = fmt(isMin ? precoMin : precoRec);
+  barVar.textContent   = fmt(isMin ? minBaixo : recBaixo) + ' – ' + fmt(isMin ? minAlto : recAlto);
+  barDest.style.display   = '';
+  barNenhum.style.display = 'none';
+  wrapper.classList.toggle('barra-rec-ativo', !isMin);
+
+  pedidoBloco.style.display = '';
+  pedidoAviso.style.display = 'none';
+}
+
+function deselect() {
+  nivelAtual = null;
+  cardMin.classList.remove('selecionado');
+  cardRec.classList.remove('selecionado');
+  cardMin.setAttribute('aria-pressed', 'false');
+  cardRec.setAttribute('aria-pressed', 'false');
+  fill.style.width = '0%';
+  thumb.style.left = '0%';
+  thumb.classList.remove('visivel');
+  barDest.style.display   = 'none';
+  barNenhum.style.display = '';
+  wrapper.classList.remove('barra-rec-ativo');
+  pedidoBloco.style.display = 'none';
+  pedidoAviso.style.display = '';
+}
+
+cardMin.addEventListener('click', () => select('minimo'));
+cardRec.addEventListener('click', () => select('recomendado'));
+cardMin.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') select('minimo'); });
+cardRec.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') select('recomendado'); });
+</script>
 {% endblock %}

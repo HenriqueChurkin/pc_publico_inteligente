@@ -1,4 +1,4 @@
-"""Aba 02: detalhes de uso (condições do cálculo e requisitos de cada software)."""
+"""Aba 02: detalhes de uso."""
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 import estado
@@ -13,18 +13,27 @@ bp = Blueprint("etapa2", __name__)
 @bp.route("/etapa2", methods=["GET", "POST"])
 def pagina():
     est = estado.obter()
-    if not (est["contratacao"] and est["finalidade"] and est["softwares"]):
-        flash("Comece escolhendo o tipo de contratação e a finalidade.", "aviso")
+    if not (est.get("contratacao") and est.get("softwares")):
+        flash("Comece escolhendo a finalidade do computador.", "aviso")
         return redirect(url_for("etapa1.pagina"))
 
     if request.method == "POST":
+        # vida_util vem como valor de radio ("3", "5", "8")
+        vida_raw = request.form.get("vida_util", "5")
+        vida_map = {"3": 3, "5": 5, "8": 8}
+        vida = vida_map.get(vida_raw, parse_int(vida_raw, 5, 1, 15))
+
+        # usuarios vem como radio ("1", "2", "5")
+        usuarios_raw = request.form.get("usuarios", "1")
+        usuarios_map = {"1": 1, "2": 2, "5": 5}
+        usuarios = usuarios_map.get(usuarios_raw, parse_int(usuarios_raw, 1, 1, 1000))
+
         cond = {
             "multitarefa": request.form.get("multitarefa") if request.form.get("multitarefa") in
                            ("baixa", "moderada", "alta") else "moderada",
-            "vida_util": parse_int(request.form.get("vida_util"), 5, 1, 15),
-            "dados_locais_gb": (parse_int(request.form.get("dados_locais_gb"), 0, 0, 100000)
-                                if request.form.get("dados_locais") else 0),
-            "usuarios": parse_int(request.form.get("usuarios"), 1, 1, 1000),
+            "vida_util": vida,
+            "dados_locais_gb": parse_int(request.form.get("dados_locais_gb"), 0, 0, 100000),
+            "usuarios": usuarios,
         }
 
         novos, erros = {}, []
@@ -39,15 +48,11 @@ def pagina():
                     "gpu": parse_int(request.form.get(f"{sid}__{tipo}__gpu"), 0, 0, 3),
                 }
             novos[sid] = item
-            for comp in ("ram", "ssd", "cpu", "gpu"):
-                if item["min"][comp] > item["rec"][comp]:
-                    erros.append(f"{sid}: o mínimo de {comp.upper()} não pode ser maior que o recomendado.")
-                    break
 
         est["cond"] = cond
         est["reqs_sw"] = novos
         if erros:
-            flash("Em algum software o mínimo ficou maior que o recomendado. Corrija e salve de novo.", "erro")
+            flash("Erro nos requisitos. Verifique e tente novamente.", "erro")
             return render_template("etapa2.html", **_contexto(est))
         return redirect(url_for("resultado.pagina"))
 
@@ -55,8 +60,9 @@ def pagina():
 
 
 def _contexto(est):
+    finalidade_id = (est.get("finalidades") or [est.get("finalidade")])[0]
     return {
-        "finalidade": FINALIDADES_POR_ID[est["finalidade"]],
+        "finalidade": FINALIDADES_POR_ID.get(finalidade_id, {}),
         "softwares": softwares_do_estado(est),
         "cond": est["cond"],
         "gpu_rotulos": GPU_ROTULOS,

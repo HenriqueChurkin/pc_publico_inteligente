@@ -118,6 +118,52 @@ def _capacidades(t):
     return res
 
 
+# ---------------------------------------------------------------------------
+# Vídeo (integrado ou dedicado). Só olha as frases que falam de vídeo e entende
+# negações, como "integrado, sem exigência de placa dedicada" (= integrado).
+# ---------------------------------------------------------------------------
+# a frase fala de vídeo?
+_FRASE_VIDEO = r"v[ií]deo|gr[aá]fic|\bgpu\b|placa\s+dedicad"
+# "sem placa dedicada", "não exige vídeo dedicado", "dispensa placa dedicada"...
+_NEG = r"(?:sem|n[ãa]o|dispens\w*|desnecess\w*)"
+_NEG_DEDICADA = rf"\b{_NEG}(?:\s+\w+){{0,6}}?\s+dedicad\w*"
+# "dedicada não é necessária", "dedicada dispensável"
+_DEDICADA_NEG = r"\bdedicad\w*\s+(?:n[ãa]o\s+[eé]\s+\w+|dispens\w+|desnecess\w+)"
+# "não aceitar integrada", "sem vídeo integrado"
+_NEG_INTEGRADA = rf"\b{_NEG}(?:\s+\w+){{0,6}}?\s+integrad\w*"
+
+_NIVEIS_VIDEO = [
+    (3, r"avan[çc]ad|alto\s+desempenho|alta\s+performance"),
+    (2, r"intermedi"),
+    (1, r"entrada|b[áa]sic"),
+]
+
+
+def _video(t):
+    """Devolve 0 (integrado), 1 (dedicado de entrada), 2 (intermediário), 3 (avançado) ou None."""
+    frases = [f for f in re.split(_FIM_FRASE, t) if re.search(_FRASE_VIDEO, f)]
+    if not frases:
+        return None
+    texto = " ".join(frases)
+
+    sem_neg_ded = re.sub(_DEDICADA_NEG, " ", re.sub(_NEG_DEDICADA, " ", texto))
+    recusa_integrada = bool(re.search(_NEG_INTEGRADA, texto))
+    sem_neg_int = re.sub(_NEG_INTEGRADA, " ", texto)
+
+    dedicada = bool(re.search(r"\bdedicad", sem_neg_ded)) or recusa_integrada
+    integrada = bool(re.search(r"\bintegrad", sem_neg_int))
+    dispensa_dedicada = bool(re.search(_NEG_DEDICADA, texto) or re.search(_DEDICADA_NEG, texto))
+
+    # "integrado", "integrado ou dedicado" ou "sem placa dedicada": o piso aceito é o integrado
+    if integrada or (dispensa_dedicada and not dedicada):
+        return 0
+    if dedicada:
+        # se o texto cita mais de um nível ("de entrada a intermediário"), vale o piso
+        niveis = [n for n, padrao in _NIVEIS_VIDEO if re.search(padrao, sem_neg_ded)]
+        return min(niveis) if niveis else 1
+    return None
+
+
 def extrair_requisitos(texto):
     """Lê o texto e devolve {"ram": GB|None, "ssd": GB|None, "cpu": classe|None, "gpu": 0..3|None}."""
     t = texto.lower()
@@ -128,15 +174,7 @@ def extrair_requisitos(texto):
     if m:
         res["cpu"] = int(m.group(1))
 
-    if re.search(r"\bdedicad", t):
-        if re.search(r"avan[çc]ad|alto desempenho|alta performance", t):
-            res["gpu"] = 3
-        elif re.search(r"intermedi", t):
-            res["gpu"] = 2
-        else:
-            res["gpu"] = 1
-    elif re.search(r"\bintegrad", t):
-        res["gpu"] = 0
+    res["gpu"] = _video(t)
     return res
 
 

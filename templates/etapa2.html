@@ -1,111 +1,122 @@
 {% extends "base.html" %}
-{% block titulo %}02 Detalhes de uso · {{ cfg.NOME_SITE }}{% endblock %}
+{% block titulo %}02 Detalhes · {{ cfg.NOME_SITE }}{% endblock %}
 {% block conteudo %}
 
-<p class="etapa">Etapa 02 / 03</p>
-<h1>Detalhes de uso</h1>
-<p class="lead">
-  Finalidade selecionada: <b>{{ finalidade.nome }}</b>
-  · {{ 'licitação pública' if est.contratacao == 'licitacao' else 'cotação com fornecedores' }}.
-  Estas condições mudam o cálculo do mínimo e do recomendado.
-</p>
+<span class="etapa-badge">Passo 2 de 3</span>
+<h1>Como o computador será usado no dia a dia?</h1>
+<p class="lead">Responda três perguntas simples para ajustarmos a configuração.</p>
 
 <form method="post">
+  <div class="cards-uso cards-uso-center">
 
-  <fieldset>
-    <legend>Condições de uso</legend>
-    <div class="grade-campos">
-
-      <div class="campo">
-        <span class="rotulo">Multitarefa</span>
-        {% for valor, texto in [('baixa','Baixa'),('moderada','Moderada'),('alta','Alta')] %}
-        <label class="linha"><input type="radio" name="multitarefa" value="{{ valor }}"
-               {% if cond.multitarefa == valor %}checked{% endif %}> {{ texto }}</label>
+    <!-- MULTITAREFA -->
+    <div class="card-uso">
+      <div class="card-uso-titulo">⚡ Quantas coisas ao mesmo tempo?</div>
+      <div class="opcoes-uso">
+        {% for valor, nome, desc in [
+          ('baixa',   'Poucas janelas',   'Um programa de cada vez'),
+          ('moderada','Quantidade normal','2 a 5 programas abertos juntos'),
+          ('alta',    'Muita coisa aberta','6+ programas, arquivos grandes')
+        ] %}
+        <label class="opcao-uso {% if cond.multitarefa == valor %}marcado{% endif %}">
+          <input type="radio" name="multitarefa" value="{{ valor }}"
+                 {% if cond.multitarefa == valor %}checked{% endif %}>
+          <div>
+            <div>{{ nome }}</div>
+            <div class="opcao-uso-desc">{{ desc }}</div>
+          </div>
+        </label>
         {% endfor %}
       </div>
-
-      <div class="campo">
-        <label class="rotulo" for="vida_util">Vida útil esperada (anos)</label>
-        <input type="number" id="vida_util" name="vida_util" min="1" max="15" value="{{ cond.vida_util }}">
-      </div>
-
-      <div class="campo">
-        <span class="rotulo">Dados guardados localmente</span>
-        <label class="linha"><input type="checkbox" name="dados_locais" id="dados_locais"
-               {% if cond.dados_locais_gb > 0 %}checked{% endif %}> Sim, no próprio computador</label>
-        <label class="linha" for="dados_locais_gb">Quantidade (GB)
-          <input type="number" id="dados_locais_gb" name="dados_locais_gb" min="0" step="10"
-                 value="{{ cond.dados_locais_gb }}"></label>
-      </div>
-
-      <div class="campo">
-        <label class="rotulo" for="usuarios">Usuários simultâneos</label>
-        <input type="number" id="usuarios" name="usuarios" min="1" value="{{ cond.usuarios }}">
-      </div>
-
     </div>
-  </fieldset>
 
-  <fieldset>
-    <legend>Requisitos de cada software</legend>
-    <p class="nota">Valores iniciais fictícios. Ao trocar um número, informe a fonte (documentação oficial do fabricante).
-       O cálculo usa o maior requisito entre os softwares marcados.</p>
-    <div class="rolagem">
-    <table class="tabela requisitos">
-      <thead>
-        <tr>
-          <th rowspan="2">Software</th>
-          <th colspan="2">Memória RAM (GB)</th>
-          <th colspan="2">Armazenamento (GB)</th>
-          <th colspan="2">Processador</th>
-          <th colspan="2">Vídeo</th>
-          <th rowspan="2">Fonte</th>
-        </tr>
-        <tr>
-          <th>mín.</th><th>rec.</th><th>mín.</th><th>rec.</th>
-          <th>mín.</th><th>rec.</th><th>mín.</th><th>rec.</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for s in softwares %}
-        <tr>
-          <td><b>{{ s.nome }}</b></td>
-          {% for comp in ['ram', 'ssd'] %}
-            {% for tipo in ['min', 'rec'] %}
-            <td><input type="number" min="1" name="{{ s.id }}__{{ tipo }}__{{ comp }}"
-                       value="{{ s[tipo][comp] }}" aria-label="{{ comp }} {{ tipo }}"></td>
-            {% endfor %}
-          {% endfor %}
-          {% for tipo in ['min', 'rec'] %}
-          <td>
-            <select name="{{ s.id }}__{{ tipo }}__cpu">
-              {% for c in cpu_classes %}
-              <option value="{{ c }}" {% if s[tipo].cpu == c %}selected{% endif %}>Classe {{ c }}</option>
-              {% endfor %}
-            </select>
-          </td>
-          {% endfor %}
-          {% for tipo in ['min', 'rec'] %}
-          <td>
-            <select name="{{ s.id }}__{{ tipo }}__gpu">
-              {% for valor, rotulo in gpu_rotulos.items() %}
-              <option value="{{ valor }}" {% if s[tipo].gpu == valor %}selected{% endif %}>{{ rotulo }}</option>
-              {% endfor %}
-            </select>
-          </td>
-          {% endfor %}
-          <td><input type="text" name="{{ s.id }}__fonte" value="{{ s.fonte }}" class="largo"></td>
-        </tr>
+    <!-- VIDA ÚTIL -->
+    <div class="card-uso">
+      <div class="card-uso-titulo">📅 Por quantos anos precisa durar?</div>
+      <div class="opcoes-uso">
+        {% for valor, nome, desc in [
+          ('3',  'Até 3 anos',  'Curto prazo ou uso leve'),
+          ('5',  'Em torno de 5 anos', 'Uso típico de órgão público'),
+          ('8',  'Mais de 7 anos','Longa durabilidade')
+        ] %}
+        {% set v = valor|int %}
+        {% set atual = cond.vida_util|int %}
+        {% set marcado = (v == 3 and atual <= 3) or (v == 5 and 4 <= atual <= 6) or (v == 8 and atual >= 7) %}
+        <label class="opcao-uso {% if marcado %}marcado{% endif %}">
+          <input type="radio" name="vida_util" value="{{ valor }}"
+                 {% if marcado %}checked{% endif %}>
+          <div>
+            <div>{{ nome }}</div>
+            <div class="opcao-uso-desc">{{ desc }}</div>
+          </div>
+        </label>
         {% endfor %}
-      </tbody>
-    </table>
+      </div>
     </div>
-  </fieldset>
 
-  <p class="acoes entre">
-    <a href="{{ url_for('etapa1.pagina') }}">← Voltar para Tipo e finalidade</a>
-    <button class="botao" type="submit">Calcular e ver resultado</button>
-  </p>
+    <!-- USUÁRIOS -->
+    <div class="card-uso">
+      <div class="card-uso-titulo">👥 Quantas pessoas usam ao mesmo tempo?</div>
+      <div class="opcoes-uso">
+        {% for valor, nome, desc in [
+          ('1', 'Apenas 1 pessoa','Uma pessoa por vez'),
+          ('2', '2 a 4 pessoas', 'Turnos ou pequena equipe'),
+          ('5', '5 ou mais',     'Laboratório, plantão ou quiosque')
+        ] %}
+        {% set v = valor|int %}
+        {% set u = cond.usuarios|int %}
+        {% set marcado = (v == 1 and u == 1) or (v == 2 and 2 <= u <= 4) or (v == 5 and u >= 5) %}
+        <label class="opcao-uso {% if marcado %}marcado{% endif %}">
+          <input type="radio" name="usuarios" value="{{ valor }}"
+                 {% if marcado %}checked{% endif %}>
+          <div>
+            <div>{{ nome }}</div>
+            <div class="opcao-uso-desc">{{ desc }}</div>
+          </div>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- armazenamento local (oculto, padrão 0) -->
+  <input type="hidden" name="dados_locais_gb" value="0">
+
+  <!-- softwares (mantidos da etapa 1, sem tabela de edição) -->
+  <div class="aviso info">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+    Os requisitos técnicos de cada programa são preenchidos automaticamente com valores de referência.
+    Se precisar ajustar manualmente, use a versão avançada.
+  </div>
+
+  <!-- mantém os requisitos de software sem exibir a tabela complexa -->
+  {% for s in softwares %}
+    {% for tipo in ['min', 'rec'] %}
+      <input type="hidden" name="{{ s.id }}__{{ tipo }}__ram" value="{{ s[tipo].ram }}">
+      <input type="hidden" name="{{ s.id }}__{{ tipo }}__ssd" value="{{ s[tipo].ssd }}">
+      <input type="hidden" name="{{ s.id }}__{{ tipo }}__cpu" value="{{ s[tipo].cpu }}">
+      <input type="hidden" name="{{ s.id }}__{{ tipo }}__gpu" value="{{ s[tipo].gpu }}">
+    {% endfor %}
+    <input type="hidden" name="{{ s.id }}__fonte" value="{{ s.fonte }}">
+  {% endfor %}
+
+  <div class="acoes entre">
+    <a href="{{ url_for('etapa1.pagina') }}">← Voltar</a>
+    <button class="botao grande" type="submit">Ver resultado →</button>
+  </div>
 </form>
 
+<script>
+// Marca visual ao clicar
+document.querySelectorAll('.opcao-uso').forEach(label => {
+  label.addEventListener('click', () => {
+    const name = label.querySelector('input').name;
+    document.querySelectorAll(`.opcao-uso input[name="${name}"]`).forEach(i => {
+      i.closest('.opcao-uso').classList.remove('marcado');
+    });
+    label.classList.add('marcado');
+  });
+});
+</script>
 {% endblock %}

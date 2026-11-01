@@ -1,4 +1,4 @@
-"""Aba 01: tipo de contratação e finalidade do computador."""
+"""Aba 01: tipo de contratação e finalidade(s) do computador."""
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 import estado
@@ -14,54 +14,78 @@ def pagina():
 
     if request.method == "POST":
         contratacao = request.form.get("contratacao")
-        finalidade = request.form.get("finalidade")
+        finalidades_sel = request.form.getlist("finalidade")
         marcados = request.form.getlist("softwares")
 
         erros = []
         if contratacao not in ("licitacao", "cotacao"):
-            erros.append("Escolha o tipo de contratação.")
-        if finalidade not in FINALIDADES_POR_ID:
-            erros.append("Escolha a finalidade do computador.")
+            erros.append("Escolha como a compra será feita.")
+        if not finalidades_sel:
+            erros.append("Escolha ao menos uma finalidade para o computador.")
         else:
-            validos = FINALIDADES_POR_ID[finalidade]["opcoes"]
-            marcados = [s for s in marcados if s in validos]
-            if finalidade == "outra":
-                marcados = ["manual"]
-            elif not marcados:
-                erros.append("Marque ao menos um software da finalidade.")
+            finalidades_sel = [f for f in finalidades_sel if f in FINALIDADES_POR_ID]
+            if not finalidades_sel:
+                erros.append("Finalidade inválida.")
 
         if erros:
             for e in erros:
                 flash(e, "erro")
-            # mantém o que o usuário já tinha escolhido na tela
             est["contratacao"] = contratacao if contratacao in ("licitacao", "cotacao") else est["contratacao"]
-            return render_template("etapa1.html", **_contexto(est, finalidade, marcados))
+            return render_template("etapa1.html", **_contexto(est, finalidades_sel, marcados))
 
-        # se mudou a finalidade, descarta os requisitos editados antes
-        if finalidade != est["finalidade"]:
+        tem_outra = "outra" in finalidades_sel
+        tem_normal = any(f != "outra" for f in finalidades_sel)
+
+        if tem_outra and not tem_normal:
+            # só "outra" — pega chips customizados
+            custom = [s for s in marcados if s.startswith("custom_")]
+            # cria softwares dinâmicos no estado
+            est["custom_sw"] = {}
+            for s in custom:
+                nome_chave = "custom_nome_" + s
+                nome = request.form.get(nome_chave, s[7:].replace("_", " ")).strip()
+                est["custom_sw"][s] = nome
+            marcados = custom if custom else ["manual"]
+        else:
+            todos_validos = set()
+            for fid in finalidades_sel:
+                if fid != "outra":
+                    todos_validos.update(FINALIDADES_POR_ID[fid]["opcoes"])
+            marcados = [s for s in marcados if s in todos_validos and s in SOFTWARES]
+            if not marcados:
+                padrao = set()
+                for fid in finalidades_sel:
+                    if fid != "outra":
+                        padrao.update(FINALIDADES_POR_ID[fid]["padrao"])
+                marcados = [s for s in padrao if s in SOFTWARES]
+
+        if set(finalidades_sel) != set(est.get("finalidades", [])):
             est["reqs_sw"] = {}
         est["reqs_sw"] = {k: v for k, v in est["reqs_sw"].items() if k in marcados}
         est["contratacao"] = contratacao
-        est["finalidade"] = finalidade
+        est["finalidade"] = finalidades_sel[0]
+        est["finalidades"] = finalidades_sel
         est["softwares"] = marcados
         return redirect(url_for("etapa2.pagina"))
 
-    return render_template("etapa1.html", **_contexto(est, est["finalidade"], est["softwares"]))
+    finalidades_atuais = est.get("finalidades") or ([est["finalidade"]] if est.get("finalidade") else [])
+    return render_template("etapa1.html", **_contexto(est, finalidades_atuais, est["softwares"]))
 
 
-def _contexto(est, finalidade, marcados):
-    # dados enviados ao JavaScript para trocar a lista de softwares sem recarregar a página
-    dados_js = {
-        f["id"]: {
+def _contexto(est, finalidades_sel, marcados):
+    dados_js = {}
+    for f in FINALIDADES:
+        dados_js[f["id"]] = {
             "padrao": f["padrao"],
-            "opcoes": [{"id": s, "nome": SOFTWARES[s]["nome"], "fonte": SOFTWARES[s]["fonte"]}
-                       for s in f["opcoes"]],
+            "opcoes": [
+                {"id": s, "nome": SOFTWARES[s]["nome"]}
+                for s in f["opcoes"] if s in SOFTWARES
+            ],
         }
-        for f in FINALIDADES
-    }
     return {
+        "est": est,
         "finalidades": FINALIDADES,
-        "finalidade_sel": finalidade,
-        "softwares_sel": marcados,
+        "finalidades_sel": finalidades_sel or [],
+        "softwares_sel": marcados or [],
         "dados_js": dados_js,
     }

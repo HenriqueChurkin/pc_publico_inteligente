@@ -1,7 +1,7 @@
 # PC Público Inteligente
 
 Pré-validação de compras de computadores para órgãos públicos, em Python (Flask).
-O órgão marca a finalidade do computador e recebe o mínimo, o alvo e o recomendado de hardware,
+O órgão marca a finalidade do computador e recebe o mínimo e o recomendado de hardware,
 com um caminho para **licitação pública** e outro para **cotação com fornecedores**.
 
 > Todos os requisitos por software e todos os nomes de empresas são **fictícios**, como pedem os documentos.
@@ -45,7 +45,7 @@ com um caminho para **licitação pública** e outro para **cotação com fornec
 - `dados/estados.py`: estados e cidades usados nos exemplos.
 
 ### Regras e textos
-- `servicos/calculo.py`: como multitarefa, vida útil, dados locais e usuários mudam o cálculo; como o alvo é calculado.
+- `servicos/calculo.py`: como multitarefa, vida útil, dados locais e usuários mudam o cálculo do mínimo e do recomendado.
 - `servicos/textos.py`: texto da especificação, da justificativa do ETP e do pedido de orçamento.
 - `servicos/precos.py`: régua de preço e posição de cada proposta.
 - `servicos/alertas.py`: listas de fabricantes, linhas de produto e gerações; leitura do texto do edital.
@@ -61,7 +61,7 @@ com um caminho para **licitação pública** e outro para **cotação com fornec
 
 1. **Tipo de contratação** e **finalidade** (etapa 01) definem os softwares marcados.
 2. **Detalhes de uso** (etapa 02) registram multitarefa, vida útil, dados locais e usuários, e permitem editar o requisito de cada software com a fonte.
-3. O cálculo pega o maior requisito entre os softwares, aplica as condições e gera **mínimo, alvo e recomendado**.
+3. O cálculo pega o maior requisito entre os softwares, aplica as condições e gera **mínimo e recomendado**.
 4. Saída A, **licitação**: tabela dos três valores, régua de preço (o usuário informa o preço da mínima e da recomendada; o valor médio é a média dos dois), especificação por desempenho e justificativa para o ETP, com alerta de marca/modelo/geração.
 5. Saída B, **cotação**: escolha de estados, texto padrão do pedido de orçamento, registro de contatos e pontos de busca por estado (ordem alfabética, sem preço, com data da última conferência).
 6. **Conferir especificação**: cola um texto de edital, compara com o cálculo em gráfico de barras e alerta sobre capacidade acima da referência e sobre marca, modelo ou geração.

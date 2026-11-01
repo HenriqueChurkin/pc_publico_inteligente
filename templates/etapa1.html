@@ -1,72 +1,226 @@
 {% extends "base.html" %}
-{% block titulo %}01 Tipo e finalidade · {{ cfg.NOME_SITE }}{% endblock %}
+{% block titulo %}01 Finalidade · {{ cfg.NOME_SITE }}{% endblock %}
 {% block conteudo %}
 
-<p class="etapa">Etapa 01 / 03</p>
-<h1>Tipo de contratação e finalidade</h1>
-<p class="lead">Escolha como a compra será feita e para que o computador será usado.
-   O cálculo dos requisitos parte dessas duas respostas.</p>
+<span class="etapa-badge">Passo 1 de 3</span>
+<h1>Para que vai ser usado o computador?</h1>
+<p class="lead">Escolha uma ou mais finalidades. Os programas de cada área já aparecem marcados.</p>
 
 <form method="post" id="form-etapa1">
 
-  <h2>Tipo de contratação</h2>
-  {% set tipo = est.contratacao or 'licitacao' %}
-  <div class="duas-colunas">
-    <label class="opcao {% if tipo == 'licitacao' %}marcada{% endif %}">
-      <input type="radio" name="contratacao" value="licitacao" {% if tipo == 'licitacao' %}checked{% endif %}>
-      <span><b>Licitação pública</b><br>
-        O órgão publica o edital e recebe propostas. A ferramenta calcula a especificação
-        para evitar que o menor preço atenda só ao piso.</span>
+  <!-- FINALIDADES -->
+  <div class="grid-finalidades">
+    {% for f in finalidades %}
+    <label class="card-final {% if f.id in finalidades_sel %}selecionado{% endif %}"
+           data-id="{{ f.id }}">
+      <input type="checkbox" name="finalidade" value="{{ f.id }}"
+             {% if f.id in finalidades_sel %}checked{% endif %}>
+      <div class="card-final-check"></div>
+      <div class="final-icone">{{ f.icone }}</div>
+      <div class="final-nome">{{ f.nome }}</div>
+      <div class="final-desc">{{ f.descricao }}</div>
     </label>
-    <label class="opcao {% if tipo == 'cotacao' %}marcada{% endif %}">
-      <input type="radio" name="contratacao" value="cotacao" {% if tipo == 'cotacao' %}checked{% endif %}>
-      <span><b>Cotação com fornecedores</b><br>
-        Contratação direta com pedido de orçamento. A ferramenta prepara o pedido e indica
-        pontos de busca por estado.</span>
-    </label>
+    {% endfor %}
   </div>
 
-  <div class="duas-colunas">
-    <fieldset>
-      <legend>Finalidade do computador</legend>
+  <!-- BLOCO SOFTWARES (categorias normais) -->
+  <div class="sec-softwares" id="bloco-softwares"
+       {% if not finalidades_sel or finalidades_sel == ['outra'] %}style="display:none"{% endif %}>
+    <div class="sec-softwares-titulo">Quais programas serão usados?</div>
+    <div class="sec-softwares-sub">Já marcamos os mais comuns. Adicione ou remova conforme a necessidade.</div>
+    <div class="grid-sw" id="lista-softwares">
       {% for f in finalidades %}
-      <label class="opcao {% if finalidade_sel == f.id %}marcada{% endif %}">
-        <input type="radio" name="finalidade" value="{{ f.id }}" {% if finalidade_sel == f.id %}checked{% endif %}>
-        <span>{{ f.nome }}</span>
-      </label>
-      {% endfor %}
-    </fieldset>
-
-    <fieldset>
-      <legend>Softwares da finalidade</legend>
-      <div id="lista-softwares">
-        {% if finalidade_sel == 'outra' %}
-          <p class="nota">Nesta finalidade você informa os requisitos manualmente na próxima etapa.</p>
-        {% elif finalidade_sel %}
-          {% for s in dados_js[finalidade_sel].opcoes %}
-          <label class="opcao {% if s.id in softwares_sel %}marcada{% endif %}">
-            <input type="checkbox" name="softwares" value="{{ s.id }}" {% if s.id in softwares_sel %}checked{% endif %}>
-            <span>{{ s.nome }}</span>
-            <small>fonte: {{ s.fonte }}</small>
-          </label>
+        {% if f.id in finalidades_sel and f.opcoes %}
+          <div class="sw-grupo-titulo" data-grupo="{{ f.id }}">{{ f.icone }} {{ f.nome }}</div>
+          {% for s_id in f.opcoes %}
+            {% if s_id in dados_js[f.id].opcoes | map(attribute='id') | list %}
+              {% set sw_list = dados_js[f.id].opcoes | selectattr('id', 'equalto', s_id) | list %}
+              {% if sw_list %}{% set sw = sw_list[0] %}
+              <label class="sw-label {% if sw.id in softwares_sel %}marcado{% endif %}"
+                     data-grupo="{{ f.id }}">
+                <input type="checkbox" name="softwares" value="{{ sw.id }}"
+                       {% if sw.id in softwares_sel %}checked{% endif %}>
+                <span class="sw-nome">{{ sw.nome }}</span>
+              </label>
+              {% endif %}
+            {% endif %}
           {% endfor %}
-        {% else %}
-          <p class="nota">Escolha uma finalidade para ver os softwares.</p>
         {% endif %}
-      </div>
-      <p class="nota">Os requisitos de cada software podem ser editados na etapa seguinte, com a fonte registrada.</p>
-    </fieldset>
+      {% endfor %}
+    </div>
   </div>
 
-  <p class="acoes entre">
+  <!-- BLOCO "OUTRA NECESSIDADE" -->
+  <div class="sec-softwares" id="bloco-outra"
+       {% if 'outra' not in finalidades_sel %}style="display:none"{% endif %}>
+    <div class="sec-softwares-titulo">⚙️ Quais programas serão usados?</div>
+    <div class="sec-softwares-sub">Digite o nome do programa e pressione <kbd>Enter</kbd> para adicionar.</div>
+
+    <div class="outra-input-row">
+      <input type="text" id="outra-input" placeholder="Ex.: AutoCAD, Power BI, QGIS…"
+             autocomplete="off" class="outra-input">
+      <button type="button" class="botao secundario" id="outra-add-btn">Adicionar</button>
+    </div>
+
+    <div class="outra-chips" id="outra-chips">
+      {% for s in softwares_sel %}
+        {% if s.startswith('custom_') %}
+        <div class="outra-chip" data-id="{{ s }}">
+          <span>{{ s[7:] | replace('_', ' ') }}</span>
+          <button type="button" class="outra-chip-rm">✕</button>
+          <input type="hidden" name="softwares" value="{{ s }}">
+          <input type="hidden" name="custom_{{ s[7:] | replace('_', ' ') }}" value="{{ s[7:] | replace('_', ' ') }}">
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    <p class="nota" style="margin-top:8px">Os requisitos técnicos serão calculados com base em configuração intermediária de referência.</p>
+  </div>
+
+  <!-- TIPO DE COMPRA -->
+  {% set tipo = est.contratacao or 'licitacao' %}
+  <h2 style="margin-top:32px">Como será feita a compra?</h2>
+
+  <div class="grid-contratacao">
+    <label class="card-contrat {% if tipo == 'licitacao' %}selecionado{% endif %}">
+      <input type="radio" name="contratacao" value="licitacao" {% if tipo == 'licitacao' %}checked{% endif %}>
+      <div class="contrat-radio"></div>
+      <div class="contrat-icon">🏛️</div>
+      <div class="contrat-info">
+        <h3>Licitação pública</h3>
+        <p>Publicar edital e receber propostas. Inclui especificação técnica e referência de preço.</p>
+      </div>
+    </label>
+    <label class="card-contrat {% if tipo == 'cotacao' %}selecionado{% endif %}">
+      <input type="radio" name="contratacao" value="cotacao" {% if tipo == 'cotacao' %}checked{% endif %}>
+      <div class="contrat-radio"></div>
+      <div class="contrat-icon">📋</div>
+      <div class="contrat-info">
+        <h3>Cotação com fornecedores</h3>
+        <p>Contratação direta. Gera texto de pedido de orçamento e indica onde buscar por estado.</p>
+      </div>
+    </label>
+  </div>
+
+  <div class="acoes entre">
     <a href="{{ url_for('inicio.pagina') }}">← Início</a>
-    <button class="botao" type="submit">Continuar para Detalhes de uso</button>
-  </p>
+    <button class="botao grande" type="submit">Ver configuração recomendada →</button>
+  </div>
+
 </form>
 
 <script id="dados-finalidades" type="application/json">{{ dados_js|tojson }}</script>
+
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/etapa1.js') }}"></script>
+<script>
+const dadosJs = JSON.parse(document.getElementById('dados-finalidades').textContent);
+const cards = document.querySelectorAll('.card-final');
+const blocoSw = document.getElementById('bloco-softwares');
+const blocoOutra = document.getElementById('bloco-outra');
+const listaSw = document.getElementById('lista-softwares');
+
+// --- contratação ---
+document.querySelectorAll('.card-contrat').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.card-contrat').forEach(c => c.classList.remove('selecionado'));
+    card.classList.add('selecionado');
+  });
+});
+
+// --- finalidades ---
+cards.forEach(card => {
+  const cb = card.querySelector('input[type=checkbox]');
+  cb.addEventListener('change', () => {
+    card.classList.toggle('selecionado', cb.checked);
+    renderSoftwares();
+  });
+});
+
+function getSelecionados() {
+  return [...document.querySelectorAll('.card-final input:checked')].map(i => i.value);
+}
+
+function renderSoftwares() {
+  const sels = getSelecionados();
+  const temOutra = sels.includes('outra');
+  const temNormal = sels.some(s => s !== 'outra');
+
+  // já checados antes de re-renderizar
+  const jaChecked = new Set([...document.querySelectorAll('#lista-softwares input:checked')].map(i => i.value));
+
+  listaSw.innerHTML = '';
+  let algum = false;
+
+  sels.forEach(fid => {
+    if (fid === 'outra') return;
+    const dados = dadosJs[fid];
+    if (!dados || !dados.opcoes.length) return;
+    algum = true;
+
+    const card = [...cards].find(c => c.querySelector('input').value === fid);
+    const icone = card ? card.querySelector('.final-icone').textContent : '';
+    const nome  = card ? card.querySelector('.final-nome').textContent : fid;
+
+    const titulo = document.createElement('div');
+    titulo.className = 'sw-grupo-titulo';
+    titulo.dataset.grupo = fid;
+    titulo.textContent = icone + ' ' + nome;
+    listaSw.appendChild(titulo);
+
+    dados.opcoes.forEach(sw => {
+      const isDefault = dados.padrao.includes(sw.id);
+      const isChecked = jaChecked.has(sw.id) || isDefault;
+      const label = document.createElement('label');
+      label.className = 'sw-label' + (isChecked ? ' marcado' : '');
+      label.dataset.grupo = fid;
+      label.innerHTML = `<input type="checkbox" name="softwares" value="${sw.id}"${isChecked ? ' checked' : ''}>
+        <span class="sw-nome">${sw.nome}</span>`;
+      label.querySelector('input').addEventListener('change', e => {
+        label.classList.toggle('marcado', e.target.checked);
+      });
+      listaSw.appendChild(label);
+    });
+  });
+
+  blocoSw.style.display   = (algum) ? '' : 'none';
+  blocoOutra.style.display = temOutra ? '' : 'none';
+}
+
+// --- "outra necessidade": adicionar chips ---
+const outraInput  = document.getElementById('outra-input');
+const outraChips  = document.getElementById('outra-chips');
+const outraAddBtn = document.getElementById('outra-add-btn');
+
+function addChip(nome) {
+  nome = nome.trim();
+  if (!nome) return;
+  const id = 'custom_' + nome.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+  // evita duplicata
+  if (outraChips.querySelector(`[data-id="${id}"]`)) return;
+
+  const div = document.createElement('div');
+  div.className = 'outra-chip';
+  div.dataset.id = id;
+  div.innerHTML = `<span>${nome}</span>
+    <button type="button" class="outra-chip-rm">✕</button>
+    <input type="hidden" name="softwares" value="${id}">
+    <input type="hidden" name="custom_nome_${id}" value="${nome}">`;
+  div.querySelector('.outra-chip-rm').addEventListener('click', () => div.remove());
+  outraChips.appendChild(div);
+  outraInput.value = '';
+  outraInput.focus();
+}
+
+outraAddBtn.addEventListener('click', () => addChip(outraInput.value));
+outraInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); addChip(outraInput.value); }
+});
+
+// delegação para chips já existentes
+outraChips.querySelectorAll('.outra-chip-rm').forEach(btn => {
+  btn.addEventListener('click', () => btn.closest('.outra-chip').remove());
+});
+</script>
 {% endblock %}

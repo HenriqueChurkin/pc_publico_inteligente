@@ -1,15 +1,12 @@
-"""Cálculo da configuração mínima, alvo e recomendada.
+"""Cálculo da configuração mínima e da recomendada.
 
 Regra geral:
   1. Para cada componente, pega o MAIOR requisito entre os softwares escolhidos.
   2. Aplica as condições (multitarefa, vida útil, dados locais, usuários simultâneos).
-  3. Alvo = média entre mínimo e recomendado (processador e vídeo são arredondados
-     para cima, porque são classes inteiras).
+  3. O recomendado nunca fica abaixo do mínimo.
 
 Para mudar as regras de ajuste, edite a função calcular() abaixo.
 """
-import math
-
 from dados.componentes import (COMPONENTES, CPU_MAX, GPU_ROTULOS, RAM_PASSOS,
                                SSD_PASSOS)
 from servicos.formatacao import formatar_componente
@@ -89,31 +86,20 @@ def calcular(softwares, cond):
     for c in IDS:
         rc[c] = max(rc[c], mn[c])
 
-    # Alvo
-    alvo = {
-        "ram": (mn["ram"] + rc["ram"]) / 2,
-        "ssd": (mn["ssd"] + rc["ssd"]) / 2,
-        "cpu": math.ceil((mn["cpu"] + rc["cpu"]) / 2),
-        "gpu": math.ceil((mn["gpu"] + rc["gpu"]) / 2),
-    }
-
     componentes = []
     for cid, nome in COMPONENTES:
         componentes.append({
             "id": cid,
             "nome": nome,
             "minimo": mn[cid],
-            "alvo": alvo[cid],
             "recomendado": rc[cid],
             "min_txt": formatar_componente(cid, mn[cid]),
-            "alvo_txt": formatar_componente(cid, alvo[cid]),
             "rec_txt": formatar_componente(cid, rc[cid]),
         })
 
     return {
         "componentes": componentes,
         "minimo": mn,
-        "alvo": alvo,
         "recomendado": rc,
         "ajustes": ajustes,
         "cond": cond,

@@ -37,8 +37,8 @@
   {{ cond.usuarios }} usuário(s) simultâneo(s) · dados locais: {{ cond.dados_locais_gb }} GB
 </p>
 
-<h2>Configuração mínima{% if contratacao == 'licitacao' %}, alvo{% endif %} e recomendada</h2>
-{% with mostrar_alvo = (contratacao == 'licitacao') %}{% include "parciais/tabela_requisitos.html" %}{% endwith %}
+<h2>Configuração mínima e recomendada</h2>
+{% include "parciais/tabela_requisitos.html" %}
 
 {% if contratacao == 'licitacao' %}
   {% if regua %}
@@ -58,11 +58,15 @@
     {% endif %}
   {% endif %}
 
-  <h2>Especificação por desempenho (nível: {{ 'alvo' if nivel == 'alvo' else 'mínimo' }})</h2>
-  <pre>{{ especificacao }}</pre>
+  <h2>Texto para o edital: configuração mínima</h2>
+  <pre>{{ especificacao_min }}</pre>
+  <h2>Texto para o edital: configuração recomendada</h2>
+  <pre>{{ especificacao_rec }}</pre>
 
-  <h2>Justificativa para o Estudo Técnico Preliminar</h2>
-  <ul>{% for item in justificativa %}<li>{{ item }}</li>{% endfor %}</ul>
+  <h2>Justificativa para o ETP: configuração mínima</h2>
+  <ul>{% for item in justificativa_min %}<li>{{ item }}</li>{% endfor %}</ul>
+  <h2>Justificativa para o ETP: configuração recomendada</h2>
+  <ul>{% for item in justificativa_rec %}<li>{{ item }}</li>{% endfor %}</ul>
 
 {% else %}
   <h2>Pedido de orçamento</h2>
