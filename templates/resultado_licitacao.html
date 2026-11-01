@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block titulo %}03 Resultado · {{ cfg.NOME_SITE }}{% endblock %}
+{% block conteudo %}
+
+<p class="etapa">Etapa 03 / 03 · Licitação pública</p>
+<h1>Requisitos e referência de preço da licitação</h1>
+<p class="lead">
+  Finalidade selecionada: <b>{{ finalidade_nome }}</b> ·
+  {% for s in softwares %}{{ s.nome }}{{ ', ' if not loop.last }}{% endfor %}
+  · vida útil de {{ cond.vida_util }} anos
+</p>
+
+<div class="aviso info">
+  <b>Valor médio em reais como referência para as propostas.</b>
+  No menor preço, a proposta vencedora tende ao piso. A ferramenta calcula a média entre o preço da
+  configuração mínima e o da recomendada e mostra onde cada proposta recebida fica nessa régua.
+</div>
+
+<h2>Configuração mínima, alvo e recomendada</h2>
+{% with mostrar_alvo = true %}{% include "parciais/tabela_requisitos.html" %}{% endwith %}
+<p class="nota">No processador e no vídeo, o alvo é arredondado para cima, porque são classes inteiras.</p>
+
+<!-- ================= RÉGUA DE PREÇO ================= -->
+<h2 id="preco">Régua de preço</h2>
+<p class="nota">A ferramenta não consulta preços: informe os valores da pesquisa de preços do órgão
+   para a configuração mínima e para a recomendada.</p>
+
+<form method="post" action="{{ url_for('resultado.precos') }}" id="form-precos">
+  <div class="grade-campos">
+    <div class="campo">
+      <label class="rotulo" for="preco_min">Preço da configuração mínima (R$)</label>
+      <input type="text" id="preco_min" name="preco_min" inputmode="decimal" placeholder="ex.: 4.200,00"
+             value="{{ '%.2f'|format(precos.min)|replace('.', ',') if precos.min is not none }}">
+    </div>
+    <div class="campo">
+      <label class="rotulo" for="preco_rec">Preço da configuração recomendada (R$)</label>
+      <input type="text" id="preco_rec" name="preco_rec" inputmode="decimal" placeholder="ex.: 6.800,00"
+             value="{{ '%.2f'|format(precos.rec)|replace('.', ',') if precos.rec is not none }}">
+    </div>
+    <div class="campo">
+      <label class="rotulo" for="fonte">Fonte dos preços</label>
+      <input type="text" id="fonte" name="fonte" placeholder="Pesquisa de preços do órgão (a informar)"
+             value="{{ precos.fonte }}">
+    </div>
+    <div class="campo destaque">
+      <span class="rotulo">Valor médio</span>
+      <b class="valor-grande">{{ regua.media|brl if regua else '—' }}</b>
+      {% if regua %}<small>({{ regua.minimo|brl_curto }} + {{ regua.recomendado|brl_curto }}) ÷ 2</small>{% endif %}
+    </div>
+  </div>
+
+  <h3>Propostas recebidas <small>(opcional)</small></h3>
+  <div id="propostas">
+    {% for p in (precos.propostas or []) %}
+    <div class="proposta-linha">
+      <input type="text" name="proposta_nome" placeholder="Nome (ex.: Proposta {{ loop.index }})" value="{{ p.nome }}">
+      <input type="text" name="proposta_valor" inputmode="decimal" placeholder="Valor (R$)"
+             value="{{ '%.2f'|format(p.valor)|replace('.', ',') }}">
+      <button type="button" class="botao pequeno secundario remover-proposta">Remover</button>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="acoes">
+    <button type="button" class="botao secundario pequeno" id="add-proposta">+ Adicionar proposta</button>
+    <button type="submit" class="botao">Calcular régua</button>
+  </p>
+</form>
+
+{% if regua %}
+<div class="regua-bloco">
+  <div class="regua">
+    <div class="regua-rotulos">
+      <div class="rotulo-marca" style="left: {{ regua.pct_min }}%">Mínima<br><b>{{ regua.minimo|brl_curto }}</b></div>
+      <div class="rotulo-marca media" style="left: {{ regua.pct_media }}%">Valor médio<br><b>{{ regua.media|brl_curto }}</b></div>
+      <div class="rotulo-marca" style="left: {{ regua.pct_rec }}%">Recomendada<br><b>{{ regua.recomendado|brl_curto }}</b></div>
+    </div>
+    <div class="regua-barra">
+      {% for s in regua.segmentos %}
+      <div class="seg seg-{{ s.cls }}" style="left: {{ s.left }}%; width: {{ s.width }}%"></div>
+      {% endfor %}
+      <div class="traco" style="left: {{ regua.pct_min }}%"></div>
+      <div class="traco media" style="left: {{ regua.pct_media }}%"></div>
+      <div class="traco" style="left: {{ regua.pct_rec }}%"></div>
+      {% for p in regua.propostas %}
+      <div class="ponto" style="left: {{ p.pct }}%" title="{{ p.nome }}: {{ p.valor|brl }}">{{ p.n }}</div>
+      {% endfor %}
+    </div>
+    <ul class="legenda">
+      {% for s in regua.segmentos %}<li><i class="seg-{{ s.cls }}"></i>{{ s.rotulo }}</li>{% endfor %}
+    </ul>
+  </div>
+
+  {% if regua.propostas %}
+  <table class="tabela">
+    <thead><tr><th>#</th><th>Proposta recebida</th><th>Valor</th><th>Posição</th><th>O que o responsável deve verificar</th></tr></thead>
+    <tbody>
+      {% for p in regua.propostas %}
+      <tr>
+        <td>{{ p.n }}</td>
+        <td><b>{{ p.nome }}</b></td>
+        <td>{{ p.valor|brl }}</td>
+        <td><span class="selo pos-{{ p.pos }}">{{ p.pos_txt }}</span></td>
+        <td>{{ p.verificar }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+  <p class="nota">A ferramenta não escolhe vencedor nem desclassifica proposta. A média de dois preços não
+     substitui a pesquisa de preços que define o valor estimado da contratação.</p>
+</div>
+{% endif %}
+
+<!-- ================= ESPECIFICAÇÃO E JUSTIFICATIVA ================= -->
+<h2 id="especificacao">Especificação por desempenho (texto para o edital)</h2>
+
+<form method="post" action="{{ url_for('resultado.nivel') }}" class="em-linha-form">
+  <span class="rotulo">Nível exigido no texto:</span>
+  <label class="linha"><input type="radio" name="nivel" value="alvo" {% if nivel == 'alvo' %}checked{% endif %}>
+    Alvo (média entre mínimo e recomendado)</label>
+  <label class="linha"><input type="radio" name="nivel" value="minimo" {% if nivel == 'minimo' %}checked{% endif %}>
+    Mínimo (piso)</label>
+  <button class="botao pequeno secundario" type="submit">Aplicar</button>
+</form>
+
+<textarea id="spec" class="texto-area" rows="8" data-verificar-termos="#alerta-termos">{{ especificacao }}</textarea>
+<div id="alerta-termos" class="aviso atencao" hidden></div>
+<p class="nota">Os campos entre colchetes dependem de uma regra oficial para expressar desempenho sem citar fabricante.
+   Você pode editar o texto: se aparecer marca, linha de produto ou geração, o programa avisa.</p>
+<p class="acoes"><button type="button" class="botao secundario" data-copiar="#spec">Copiar texto</button></p>
+
+<h2>Justificativa para o Estudo Técnico Preliminar</h2>
+<ul id="justificativa" class="lista-justificativa">
+  {% for item in justificativa %}<li>{{ item }}</li>{% endfor %}
+</ul>
+<p class="acoes"><button type="button" class="botao secundario" data-copiar="#justificativa">Copiar texto</button></p>
+
+<div class="aviso atencao">
+  <b>Atenção:</b> o alvo é uma premissa do projeto. Exigir acima do mínimo também precisa de justificativa,
+  e o texto gerado já traz o motivo (a proposta de menor preço tende ao piso).
+</div>
+
+<p class="acoes entre">
+  <a href="{{ url_for('etapa2.pagina') }}">← Voltar para Detalhes de uso</a>
+  <span>
+    <a class="botao secundario" href="{{ url_for('relatorio.pagina') }}" target="_blank">Ver relatório</a>
+    <a class="botao" href="{{ url_for('relatorio.pagina', baixar=1) }}">Exportar relatório</a>
+  </span>
+</p>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/resultado.js') }}"></script>
+{% endblock %}

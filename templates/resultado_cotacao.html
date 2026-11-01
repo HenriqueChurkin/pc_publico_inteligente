@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block titulo %}03 Resultado · {{ cfg.NOME_SITE }}{% endblock %}
+{% block conteudo %}
+
+<p class="etapa">Etapa 03 / 03 · Cotação com fornecedores</p>
+<h1>Pedido de orçamento e pontos de busca</h1>
+<p class="lead">
+  Finalidade selecionada: <b>{{ finalidade_nome }}</b> · contratação direta · sem exibição de preços
+</p>
+
+<h2>Configuração mínima e recomendada</h2>
+{% with mostrar_alvo = false %}{% include "parciais/tabela_requisitos.html" %}{% endwith %}
+
+<!-- ================= REGIÕES ================= -->
+<h2 id="regioes">Regiões de busca</h2>
+<div class="chips">
+  {% for e in estados_sel %}
+  <form method="post" action="{{ url_for('resultado.estados') }}" class="chip">
+    <input type="hidden" name="acao" value="remover">
+    <input type="hidden" name="uf" value="{{ e[0] }}">
+    <span>{{ e[1] }}</span>
+    <button type="submit" title="Remover {{ e[1] }}" aria-label="Remover {{ e[1] }}">×</button>
+  </form>
+  {% endfor %}
+</div>
+
+<form method="post" action="{{ url_for('resultado.estados') }}" class="em-linha-form">
+  <input type="hidden" name="acao" value="adicionar">
+  <label for="uf" class="rotulo">Adicionar estado:</label>
+  <select name="uf" id="uf">
+    {% for e in estados if e[0] not in est.estados %}
+    <option value="{{ e[0] }}">{{ e[1] }}</option>
+    {% endfor %}
+  </select>
+  <button class="botao pequeno" type="submit">Adicionar</button>
+</form>
+<form method="post" action="{{ url_for('resultado.estados') }}" class="em-linha-form">
+  <input type="hidden" name="acao" value="todos">
+  <button class="botao pequeno secundario" type="submit">Selecionar todos (pesquisa nacional)</button>
+</form>
+<p class="nota">
+  Valor da consulta (modelo de validação, sem cobrança no programa):
+  {% if valor_consulta %}<b>R$ {{ valor_consulta }}</b>{% else %}<b>faixa ainda não definida</b> para {{ estados_sel|length }} estados{% endif %}.
+</p>
+
+<!-- ================= PEDIDO + CONTATOS ================= -->
+<div class="duas-colunas">
+  <section>
+    <h2>Pedido de orçamento (texto padrão)</h2>
+    <pre class="texto-box" id="pedido">{{ pedido }}</pre>
+    <p class="nota">O mesmo texto é enviado a todas as empresas, para manter a igualdade entre elas.</p>
+    <p class="acoes"><button type="button" class="botao secundario" data-copiar="#pedido">Copiar pedido de orçamento</button></p>
+  </section>
+
+  <section id="contatos">
+    <h2>Registro dos contatos</h2>
+    {% if contatos %}
+    <table class="tabela pequena">
+      <thead><tr><th>Empresa</th><th>Contatada em</th><th>Resposta</th><th></th></tr></thead>
+      <tbody>
+        {% for c in contatos %}
+        <tr>
+          <td><b>{{ c.empresa }}</b></td>
+          <td>{{ c.data|data_br }}</td>
+          <td>
+            <form method="post" action="{{ url_for('resultado.contatos') }}" class="em-linha-form">
+              <input type="hidden" name="acao" value="atualizar">
+              <input type="hidden" name="indice" value="{{ loop.index0 }}">
+              <select name="resposta" onchange="this.form.submit()">
+                {% for r in respostas %}<option {% if r == c.resposta %}selected{% endif %}>{{ r }}</option>{% endfor %}
+              </select>
+            </form>
+          </td>
+          <td>
+            <form method="post" action="{{ url_for('resultado.contatos') }}">
+              <input type="hidden" name="acao" value="remover">
+              <input type="hidden" name="indice" value="{{ loop.index0 }}">
+              <button class="botao pequeno secundario" type="submit">Remover</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="nota">Nenhum contato registrado ainda.</p>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('resultado.contatos') }}" class="form-contato">
+      <input type="hidden" name="acao" value="adicionar">
+      <input type="text" name="empresa" placeholder="Empresa contatada" required>
+      <input type="date" name="data" value="{{ hoje }}">
+      <select name="resposta">{% for r in respostas %}<option>{{ r }}</option>{% endfor %}</select>
+      <button class="botao pequeno" type="submit">Registrar contato</button>
+    </form>
+    <p class="nota">A ferramenta não recomenda vencedor. A comparação das propostas é feita pelo órgão.</p>
+  </section>
+</div>
+
+<!-- ================= PONTOS DE BUSCA ================= -->
+<h2 id="pontos">Pontos de busca por estado</h2>
+<div class="grade-estados">
+  {% for p in pontos %}
+  <section class="caixa">
+    <h3>{{ p.nome }} <span class="etiqueta">{{ p.categorias|length }} categorias</span></h3>
+    {% for cat in p.categorias %}
+    <h4>{{ cat.nome }}</h4>
+    {% for item in cat.itens %}
+    <div class="ponto-busca">
+      <div>
+        <b>{{ item.nome }}</b>{% if item.ficticio %} <small>(exemplo fictício)</small>{% endif %}<br>
+        <small>{{ item.local }} · atende pessoa jurídica: {{ item.atende_pj }}<br>
+          última conferência: {{ item.ultima_conferencia|data_br if item.ultima_conferencia else 'não conferida' }}</small>
+      </div>
+      <form method="post" action="{{ url_for('resultado.conferido') }}">
+        <input type="hidden" name="id" value="{{ item.id }}">
+        <button class="botao pequeno secundario" type="submit" title="Registra a data de hoje como última conferência">Conferir</button>
+      </form>
+    </div>
+    {% endfor %}
+    {% endfor %}
+  </section>
+  {% endfor %}
+</div>
+
+<div class="aviso atencao">
+  <b>Regras da lista:</b> ordem alfabética dentro de cada categoria, sem ordem de preferência, sem preço,
+  sem avaliação e com data da última conferência de cada empresa. Varejo comum pode não emitir orçamento
+  formal para órgão público: confirme o campo “atende pessoa jurídica” de cada empresa.
+</div>
+<p class="nota">Apoio à análise técnica. Confirme com o jurídico o enquadramento da contratação e as regras de pesquisa de preços.</p>
+
+<p class="acoes entre">
+  <a href="{{ url_for('etapa2.pagina') }}">← Voltar para Detalhes de uso</a>
+  <span>
+    <a class="botao secundario" href="{{ url_for('relatorio.pagina') }}" target="_blank">Ver relatório</a>
+    <a class="botao" href="{{ url_for('relatorio.pagina', baixar=1) }}">Exportar relatório</a>
+  </span>
+</p>
+
+{% endblock %}

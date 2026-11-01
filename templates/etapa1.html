@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block titulo %}01 Tipo e finalidade · {{ cfg.NOME_SITE }}{% endblock %}
+{% block conteudo %}
+
+<p class="etapa">Etapa 01 / 03</p>
+<h1>Tipo de contratação e finalidade</h1>
+<p class="lead">Escolha como a compra será feita e para que o computador será usado.
+   O cálculo dos requisitos parte dessas duas respostas.</p>
+
+<form method="post" id="form-etapa1">
+
+  <h2>Tipo de contratação</h2>
+  {% set tipo = est.contratacao or 'licitacao' %}
+  <div class="duas-colunas">
+    <label class="opcao {% if tipo == 'licitacao' %}marcada{% endif %}">
+      <input type="radio" name="contratacao" value="licitacao" {% if tipo == 'licitacao' %}checked{% endif %}>
+      <span><b>Licitação pública</b><br>
+        O órgão publica o edital e recebe propostas. A ferramenta calcula a especificação
+        para evitar que o menor preço atenda só ao piso.</span>
+    </label>
+    <label class="opcao {% if tipo == 'cotacao' %}marcada{% endif %}">
+      <input type="radio" name="contratacao" value="cotacao" {% if tipo == 'cotacao' %}checked{% endif %}>
+      <span><b>Cotação com fornecedores</b><br>
+        Contratação direta com pedido de orçamento. A ferramenta prepara o pedido e indica
+        pontos de busca por estado.</span>
+    </label>
+  </div>
+
+  <div class="duas-colunas">
+    <fieldset>
+      <legend>Finalidade do computador</legend>
+      {% for f in finalidades %}
+      <label class="opcao {% if finalidade_sel == f.id %}marcada{% endif %}">
+        <input type="radio" name="finalidade" value="{{ f.id }}" {% if finalidade_sel == f.id %}checked{% endif %}>
+        <span>{{ f.nome }}</span>
+      </label>
+      {% endfor %}
+    </fieldset>
+
+    <fieldset>
+      <legend>Softwares da finalidade</legend>
+      <div id="lista-softwares">
+        {% if finalidade_sel == 'outra' %}
+          <p class="nota">Nesta finalidade você informa os requisitos manualmente na próxima etapa.</p>
+        {% elif finalidade_sel %}
+          {% for s in dados_js[finalidade_sel].opcoes %}
+          <label class="opcao {% if s.id in softwares_sel %}marcada{% endif %}">
+            <input type="checkbox" name="softwares" value="{{ s.id }}" {% if s.id in softwares_sel %}checked{% endif %}>
+            <span>{{ s.nome }}</span>
+            <small>fonte: {{ s.fonte }}</small>
+          </label>
+          {% endfor %}
+        {% else %}
+          <p class="nota">Escolha uma finalidade para ver os softwares.</p>
+        {% endif %}
+      </div>
+      <p class="nota">Os requisitos de cada software podem ser editados na etapa seguinte, com a fonte registrada.</p>
+    </fieldset>
+  </div>
+
+  <p class="acoes entre">
+    <a href="{{ url_for('inicio.pagina') }}">← Início</a>
+    <button class="botao" type="submit">Continuar para Detalhes de uso</button>
+  </p>
+</form>
+
+<script id="dados-finalidades" type="application/json">{{ dados_js|tojson }}</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/etapa1.js') }}"></script>
+{% endblock %}

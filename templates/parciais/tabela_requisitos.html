@@ -1,0 +1,26 @@
+{# Tabela mínimo / alvo / recomendado. Usada na tela de resultado e no relatório. #}
+<table class="tabela">
+  <thead>
+    <tr>
+      <th>Componente</th>
+      <th>Mínimo (piso da especificação)</th>
+      {% if mostrar_alvo %}<th>Alvo (média)</th>{% endif %}
+      <th>Recomendado (referência)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in calc.componentes %}
+    <tr>
+      <td><b>{{ c.nome }}</b></td>
+      <td>{{ c.min_txt }}</td>
+      {% if mostrar_alvo %}<td>{{ c.alvo_txt }}</td>{% endif %}
+      <td>{{ c.rec_txt }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% if calc.ajustes %}
+<ul class="nota ajustes">
+  {% for a in calc.ajustes %}<li>{{ a }}</li>{% endfor %}
+</ul>
+{% endif %}

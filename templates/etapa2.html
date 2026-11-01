@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block titulo %}02 Detalhes de uso · {{ cfg.NOME_SITE }}{% endblock %}
+{% block conteudo %}
+
+<p class="etapa">Etapa 02 / 03</p>
+<h1>Detalhes de uso</h1>
+<p class="lead">
+  Finalidade selecionada: <b>{{ finalidade.nome }}</b>
+  · {{ 'licitação pública' if est.contratacao == 'licitacao' else 'cotação com fornecedores' }}.
+  Estas condições mudam o cálculo do mínimo e do recomendado.
+</p>
+
+<form method="post">
+
+  <fieldset>
+    <legend>Condições de uso</legend>
+    <div class="grade-campos">
+
+      <div class="campo">
+        <span class="rotulo">Multitarefa</span>
+        {% for valor, texto in [('baixa','Baixa'),('moderada','Moderada'),('alta','Alta')] %}
+        <label class="linha"><input type="radio" name="multitarefa" value="{{ valor }}"
+               {% if cond.multitarefa == valor %}checked{% endif %}> {{ texto }}</label>
+        {% endfor %}
+      </div>
+
+      <div class="campo">
+        <label class="rotulo" for="vida_util">Vida útil esperada (anos)</label>
+        <input type="number" id="vida_util" name="vida_util" min="1" max="15" value="{{ cond.vida_util }}">
+      </div>
+
+      <div class="campo">
+        <span class="rotulo">Dados guardados localmente</span>
+        <label class="linha"><input type="checkbox" name="dados_locais" id="dados_locais"
+               {% if cond.dados_locais_gb > 0 %}checked{% endif %}> Sim, no próprio computador</label>
+        <label class="linha" for="dados_locais_gb">Quantidade (GB)
+          <input type="number" id="dados_locais_gb" name="dados_locais_gb" min="0" step="10"
+                 value="{{ cond.dados_locais_gb }}"></label>
+      </div>
+
+      <div class="campo">
+        <label class="rotulo" for="usuarios">Usuários simultâneos</label>
+        <input type="number" id="usuarios" name="usuarios" min="1" value="{{ cond.usuarios }}">
+      </div>
+
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Requisitos de cada software</legend>
+    <p class="nota">Valores iniciais fictícios. Ao trocar um número, informe a fonte (documentação oficial do fabricante).
+       O cálculo usa o maior requisito entre os softwares marcados.</p>
+    <div class="rolagem">
+    <table class="tabela requisitos">
+      <thead>
+        <tr>
+          <th rowspan="2">Software</th>
+          <th colspan="2">Memória RAM (GB)</th>
+          <th colspan="2">Armazenamento (GB)</th>
+          <th colspan="2">Processador</th>
+          <th colspan="2">Vídeo</th>
+          <th rowspan="2">Fonte</th>
+        </tr>
+        <tr>
+          <th>mín.</th><th>rec.</th><th>mín.</th><th>rec.</th>
+          <th>mín.</th><th>rec.</th><th>mín.</th><th>rec.</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in softwares %}
+        <tr>
+          <td><b>{{ s.nome }}</b></td>
+          {% for comp in ['ram', 'ssd'] %}
+            {% for tipo in ['min', 'rec'] %}
+            <td><input type="number" min="1" name="{{ s.id }}__{{ tipo }}__{{ comp }}"
+                       value="{{ s[tipo][comp] }}" aria-label="{{ comp }} {{ tipo }}"></td>
+            {% endfor %}
+          {% endfor %}
+          {% for tipo in ['min', 'rec'] %}
+          <td>
+            <select name="{{ s.id }}__{{ tipo }}__cpu">
+              {% for c in cpu_classes %}
+              <option value="{{ c }}" {% if s[tipo].cpu == c %}selected{% endif %}>Classe {{ c }}</option>
+              {% endfor %}
+            </select>
+          </td>
+          {% endfor %}
+          {% for tipo in ['min', 'rec'] %}
+          <td>
+            <select name="{{ s.id }}__{{ tipo }}__gpu">
+              {% for valor, rotulo in gpu_rotulos.items() %}
+              <option value="{{ valor }}" {% if s[tipo].gpu == valor %}selected{% endif %}>{{ rotulo }}</option>
+              {% endfor %}
+            </select>
+          </td>
+          {% endfor %}
+          <td><input type="text" name="{{ s.id }}__fonte" value="{{ s.fonte }}" class="largo"></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </fieldset>
+
+  <p class="acoes entre">
+    <a href="{{ url_for('etapa1.pagina') }}">← Voltar para Tipo e finalidade</a>
+    <button class="botao" type="submit">Calcular e ver resultado</button>
+  </p>
+</form>
+
+{% endblock %}

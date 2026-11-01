@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Relatório · {{ cfg.NOME_SITE }}</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; color: #222; max-width: 800px; margin: 24px auto; padding: 0 16px; line-height: 1.45; }
+    h1 { font-size: 22px; margin-bottom: 4px; }
+    h2 { font-size: 16px; border-bottom: 1px solid #999; padding-bottom: 3px; margin-top: 26px; }
+    table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 14px; }
+    th, td { border: 1px solid #999; padding: 5px 8px; text-align: left; vertical-align: top; }
+    th { background: #eee; }
+    pre { white-space: pre-wrap; font-family: inherit; background: #f6f6f6; border: 1px solid #ccc; padding: 10px; }
+    .aviso { border: 1px solid #c9a227; background: #fff8dc; padding: 8px 10px; font-size: 13px; margin: 14px 0; }
+    .nota { font-size: 12px; color: #555; }
+    .acoes { margin-bottom: 20px; }
+    .acoes button, .acoes a { font-size: 14px; margin-right: 8px; }
+    @media print { .acoes { display: none; } body { margin: 0; } }
+  </style>
+</head>
+<body>
+
+<p class="acoes">
+  <button onclick="window.print()">Imprimir / salvar como PDF</button>
+  <a href="{{ url_for('resultado.pagina') }}">Voltar ao resultado</a>
+</p>
+
+<h1>{{ cfg.NOME_SITE }} · Relatório de pré-validação</h1>
+<p class="nota">Emitido em {{ hoje|data_br }} · {{ cfg.AVISO_DEMO }}</p>
+
+<h2>Contratação e finalidade</h2>
+<p>
+  Tipo de contratação: <b>{{ 'Licitação pública' if contratacao == 'licitacao' else 'Cotação com fornecedores' }}</b><br>
+  Finalidade: <b>{{ finalidade_nome }}</b><br>
+  Softwares: {% for s in softwares %}{{ s.nome }} (fonte: {{ s.fonte }}){{ '; ' if not loop.last }}{% endfor %}<br>
+  Condições: multitarefa {{ cond.multitarefa }} · vida útil {{ cond.vida_util }} anos ·
+  {{ cond.usuarios }} usuário(s) simultâneo(s) · dados locais: {{ cond.dados_locais_gb }} GB
+</p>
+
+<h2>Configuração mínima{% if contratacao == 'licitacao' %}, alvo{% endif %} e recomendada</h2>
+{% with mostrar_alvo = (contratacao == 'licitacao') %}{% include "parciais/tabela_requisitos.html" %}{% endwith %}
+
+{% if contratacao == 'licitacao' %}
+  {% if regua %}
+  <h2>Referência de preço</h2>
+  <p>Preço da mínima: <b>{{ regua.minimo|brl }}</b> · Preço da recomendada: <b>{{ regua.recomendado|brl }}</b> ·
+     Valor médio: <b>{{ regua.media|brl }}</b><br>
+     Fonte dos preços: {{ precos.fonte or 'não informada' }}</p>
+    {% if regua.propostas %}
+    <table>
+      <thead><tr><th>Proposta</th><th>Valor</th><th>Posição</th><th>O que verificar</th></tr></thead>
+      <tbody>
+        {% for p in regua.propostas %}
+        <tr><td>{{ p.nome }}</td><td>{{ p.valor|brl }}</td><td>{{ p.pos_txt }}</td><td>{{ p.verificar }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  {% endif %}
+
+  <h2>Especificação por desempenho (nível: {{ 'alvo' if nivel == 'alvo' else 'mínimo' }})</h2>
+  <pre>{{ especificacao }}</pre>
+
+  <h2>Justificativa para o Estudo Técnico Preliminar</h2>
+  <ul>{% for item in justificativa %}<li>{{ item }}</li>{% endfor %}</ul>
+
+{% else %}
+  <h2>Pedido de orçamento</h2>
+  <pre>{{ pedido }}</pre>
+
+  <h2>Regiões de busca</h2>
+  <p>{% for e in estados_sel %}{{ e[1] }}{{ ', ' if not loop.last }}{% endfor %}</p>
+
+  <h2>Registro dos contatos</h2>
+  {% if contatos %}
+  <table>
+    <thead><tr><th>Empresa</th><th>Contatada em</th><th>Resposta</th></tr></thead>
+    <tbody>{% for c in contatos %}<tr><td>{{ c.empresa }}</td><td>{{ c.data|data_br }}</td><td>{{ c.resposta }}</td></tr>{% endfor %}</tbody>
+  </table>
+  {% else %}<p class="nota">Nenhum contato registrado.</p>{% endif %}
+
+  <h2>Pontos de busca</h2>
+  {% for p in pontos %}
+    <h3>{{ p.nome }}</h3>
+    {% for cat in p.categorias %}
+    <p><b>{{ cat.nome }}</b></p>
+    <ul>
+      {% for item in cat.itens %}
+      <li>{{ item.nome }}{% if item.ficticio %} (exemplo fictício){% endif %} — {{ item.local }} ·
+        atende pessoa jurídica: {{ item.atende_pj }} ·
+        última conferência: {{ item.ultima_conferencia|data_br if item.ultima_conferencia else 'não conferida' }}</li>
+      {% endfor %}
+    </ul>
+    {% endfor %}
+  {% endfor %}
+  <p class="nota">Lista em ordem alfabética dentro de cada categoria, sem ordem de preferência, sem preço e sem avaliação.</p>
+{% endif %}
+
+<div class="aviso"><b>Limites da ferramenta:</b> {{ cfg.LIMITES_FERRAMENTA }}</div>
+
+</body>
+</html>

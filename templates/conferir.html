@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block titulo %}Conferir especificação · {{ cfg.NOME_SITE }}{% endblock %}
+{% block conteudo %}
+
+<h1>Conferir especificação já redigida</h1>
+<p class="lead">Cole o trecho de um edital. O programa compara as capacidades com o cálculo da finalidade,
+   mostra em gráfico e avisa se o texto cita marca, modelo ou geração.</p>
+
+<form method="post">
+  <div class="campo">
+    <label class="rotulo" for="finalidade">Finalidade do computador</label>
+    <select name="finalidade" id="finalidade">
+      {% for f in finalidades %}
+      <option value="{{ f.id }}" {% if f.id == finalidade_sel %}selected{% endif %}>{{ f.nome }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="campo">
+    <label class="rotulo" for="texto">Texto da especificação</label>
+    <textarea name="texto" id="texto" class="texto-area" rows="8"
+              placeholder="Ex.: Memória RAM: no mínimo 16 GB. SSD de 512 GB. Processador classe 4. Vídeo dedicado."
+              data-verificar-termos="#alerta-termos">{{ texto }}</textarea>
+  </div>
+  <div id="alerta-termos" class="aviso atencao" hidden></div>
+
+  <p class="acoes"><button class="botao" type="submit">Conferir</button></p>
+</form>
+
+{% if resultado %}
+<hr>
+<h2>Resultado da conferência</h2>
+<p class="nota">
+  {% if resultado.usou_consulta %}
+    Referência: cálculo da sua consulta atual (softwares e condições escolhidos nas etapas 01 e 02).
+  {% else %}
+    Referência: softwares padrão da finalidade e condições padrão (multitarefa moderada, 5 anos, 1 usuário).
+  {% endif %}
+</p>
+
+<h3>Alertas</h3>
+{% if resultado.termos %}
+<div class="aviso erro">
+  <b>Marca, modelo ou geração no texto.</b> Em licitação, a especificação deve ser por desempenho, sem citar:
+  <ul>
+    {% for t in resultado.termos %}<li>“{{ t.termo }}” ({{ t.tipo }})</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% for a in resultado.alertas_capacidade %}
+<p class="aviso atencao">{{ a }}</p>
+{% endfor %}
+{% if not resultado.termos and not resultado.alertas_capacidade %}
+<p class="aviso info">Nenhum alerta de marca, modelo, geração ou capacidade fora da referência.</p>
+{% endif %}
+
+<h3>Comparação por componente</h3>
+<table class="tabela">
+  <thead><tr><th>Componente</th><th>Texto do edital</th><th>Mínimo</th><th>Recomendado</th><th>Situação</th></tr></thead>
+  <tbody>
+    {% for l in resultado.linhas %}
+    <tr>
+      <td><b>{{ l.comp.nome }}</b></td>
+      <td>{{ l.valor_txt }}</td>
+      <td>{{ l.comp.min_txt }}</td>
+      <td>{{ l.comp.rec_txt }}</td>
+      <td><span class="selo st-{{ l.status }}">{{ resultado.rotulos[l.status] }}</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if resultado.graficos %}
+<h3>Gráfico de capacidade</h3>
+<div class="graficos">
+  {% for g in resultado.graficos %}
+  <div class="grafico">
+    <h4>{{ g.nome }}</h4>
+    {% for b in g.barras %}
+    <div class="barra-linha">
+      <span class="barra-rotulo">{{ b.rotulo }}</span>
+      <span class="barra-trilho"><span class="barra {{ b.cls }}" style="width: {{ '%.1f'|format(b.pct) }}%"></span></span>
+      <span class="barra-valor">{{ b.txt }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endif %}
+
+{% endblock %}

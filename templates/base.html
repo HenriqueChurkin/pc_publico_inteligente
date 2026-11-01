@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}{{ cfg.NOME_SITE }}{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
+</head>
+<body>
+
+<header class="topo">
+  <div class="conteudo topo-inner">
+    <a class="marca" href="{{ url_for('inicio.pagina') }}">
+      <span class="marca-icone">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+        </svg>
+      </span>
+      <span>
+        {{ cfg.NOME_SITE }}
+        <span class="subtitulo">{{ cfg.SUBTITULO_SITE }}</span>
+      </span>
+    </a>
+  </div>
+  <nav class="abas conteudo" aria-label="Etapas">
+    {% for a in abas %}
+      <a class="aba {% if aba_atual == a.blueprint %}ativa{% endif %}" href="{{ url_for(a.endpoint) }}">
+        {% if a.numero %}<b>{{ a.numero }}</b>{% endif %}{{ a.rotulo }}
+      </a>
+    {% endfor %}
+  </nav>
+</header>
+
+<main class="conteudo">
+  {% with mensagens = get_flashed_messages(with_categories=true) %}
+    {% for categoria, texto in mensagens %}
+      <p class="aviso {{ 'erro' if categoria == 'erro' else 'atencao' }}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        {{ texto }}
+      </p>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="aviso info" style="margin-bottom:18px">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+    <span>{{ cfg.AVISO_DEMO }}</span>
+  </div>
+
+  {% block conteudo %}{% endblock %}
+</main>
+
+<footer class="rodape conteudo">
+  <p>{{ cfg.LIMITES_FERRAMENTA }}</p>
+</footer>
+
+<script src="{{ url_for('static', filename='js/comum.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
