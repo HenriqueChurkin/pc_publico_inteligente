@@ -1,16 +1,12 @@
-"""Configurações gerais do programa.
-
-Se quiser mudar a porta, o endereço ou a chave de segurança, é aqui.
-"""
+"""Configurações gerais do programa."""
 import os
 
 SECRET_KEY = os.environ.get("PCPI_SECRET", "troque-esta-chave-antes-de-publicar")
-DEBUG = True
+DEBUG = os.environ.get("FLASK_DEBUG", "0") == "1"
 
-HOST = "127.0.0.1"
-PORT = 5000
+HOST = "0.0.0.0"
+PORT = int(os.environ.get("PORT", 5000))
 
-# Textos que aparecem em várias telas (mude aqui e muda em todas)
 NOME_SITE = "PC Público Inteligente"
 SUBTITULO_SITE = "Pré-validação de compras de computadores para órgãos públicos"
 AVISO_DEMO = (
